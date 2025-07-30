@@ -4,10 +4,10 @@
 background: #34eb98;
 
 /* Chrome 10-25, Safari 5.1-6 */
-background: -webkit-linear-gradient(to bottom right, #34eb98, rgb(87, 242, 245));
+background: -webkit-linear-gradient(to bottom right, #1f955f, rgb(50, 147, 149));
 
 /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
-background: linear-gradient(to bottom right, #34eb98, rgb(87, 242, 245));
+background: linear-gradient(to bottom right, #1f955f, rgb(50, 147, 149));
 
 filter: brightness(100%);
 }
