@@ -4,17 +4,15 @@ from flask import Flask
 from flask_login import LoginManager
 
 app = Flask(__name__)
-# basicly create or open if already exists a database for storing user info
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
-app.secret_key = key
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db" # Configures database and names it users
+app.secret_key = key # This is a private secret key 
 
 db = SQLAlchemy(app)
 
-from models import User, LoginForm, RegistrationForm
-
+from models import User
+# Create or open a database with Colums for User
 with app.app_context():
     db.create_all()
 
-login_manager = LoginManager(app)
-
+login_manager = LoginManager(app) # Configures app to use loginmanager to have all features that it provides
