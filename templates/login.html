@@ -1,0 +1,42 @@
+{% extends "template.html" %}
+{% block title %}Login{% endblock %}
+{% block body %}
+    <section class="vh-100 gradient-custom">
+        <div class="container py-5 h-100">
+            <div class="row justify-content-center align-items-center h-100">
+            <div class="col-12 col-lg-9 col-xl-7">
+                <div class="card shadow-2-strong card-registration " style="border-radius: 15px;">
+                <div class="card-body p-4 p-md-5">
+                    <h3 class="mb-4 pb-2 pb-md-0 mb-md-5 center">Login</h3>
+                    <form name="login" action="/login" method="post">
+                        {{ form.hidden_tag() }} 
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+
+                                <div data-mdb-input-init class="form-outline">
+                                    <input type="text" id="userName" name="username" placeholder="Username" class="form-control form-control-lg" />
+                                </div>
+
+                            </div>
+                            <div class="col-md-6 mb-4">
+
+                                <div data-mdb-input-init class="form-outline">
+                                    <input type="password" id="password" name="password" placeholder="Password" class="form-control form-control-lg" />
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-2 text-center">
+                            <input data-mdb-ripple-init class="btn center gradient-custom btn-lg" type="submit" value="Submit" />
+                            <p style="color: red;">{{ error_msg }}</p> <!-- return from app if user won't enter 2 same passwords in password and password confirm -->
+                        </div>
+
+                    </form>
+                </div>
+                </div>
+            </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}

@@ -1,19 +1,20 @@
-'''All classes will be here'''
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.orm import Mapped, mapped_column #used in User
-from sqlalchemy import Integer, String
+from keys import key
+from flask import Flask
+from flask_login import LoginManager
 
-class Base(DeclarativeBase):
-    pass
+app = Flask(__name__)
+# basicly create or open if already exists a database for storing user info
 
-db = SQLAlchemy(model_class=Base)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///users.db"
+app.secret_key = key
 
-class User(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
-    username: Mapped[str] = mapped_column(unique=True)
-    name: Mapped[str]
-    email: Mapped[str]
-    phone: Mapped[str]
-    password_hash: Mapped[str]
+db = SQLAlchemy(app)
+
+from models import User, LoginForm, RegistrationForm
+
+with app.app_context():
+    db.create_all()
+
+login_manager = LoginManager(app)
 
