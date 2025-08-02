@@ -85,10 +85,18 @@ def login():
 def index():
     return render_template('index.html')
 
+
+@app.route('/users')
+def user_list():
+    users = User.query.filter_by().all()
+    return render_template('userlist.html', users = users)
+
+
 @app.route('/home')
 @login_required # Flask-login provided decorator that allows only logged in users to access
 def home():
     return render_template('logged.html')
+
 
 @app.route("/logout")
 @login_required
