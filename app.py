@@ -4,8 +4,8 @@ from flask import render_template, request, redirect, url_for
 from flask_login import login_user, login_required, current_user, logout_user
 
 from resources import app, db, login_manager
-from forms import LoginForm, RegistrationForm
-from models import User
+from forms import LoginForm, RegistrationForm, PostForm, CommentForm
+from models import User, Post, Comment
 from helpers import valid_error
 
 # Loads the user if logged in
@@ -32,7 +32,7 @@ def register():
         if form.password.data == form.password_confirm.data:
             password_hash = sha256(form.password.data.encode()).hexdigest() # Takes password that user provided and hashes it with sha256 returning hexadecimal value 
         else:
-            return render_template('register.html', error_msg = "Passwords don't match")
+            return render_template('register.html', error_msg = "Passwords don't match", form = form)
 
         user = User(
             name = form.name.data,
@@ -91,11 +91,54 @@ def user_list():
     users = User.query.filter_by().all()
     return render_template('userlist.html', users = users)
 
+@app.route('/posts')
+def show_posts():
+    posts = Post.query.filter_by().all()
+    return render_template('posts.html', posts = posts)
+
+@app.route('/view/<id>', methods = ['GET', 'POST'])
+def view(id):
+    form = CommentForm()
+    post = Post.query.filter_by(id = id).first()
+
+    if request.method == 'POST':
+        comment = form.comment.data
+        print(comment)
+        new = Comment(
+            post_id = post.id,
+            content = comment,
+            username = current_user.username
+        )
+        db.session.add(new)
+        db.session.commit()
+
+    comments = Comment.query.filter_by(post_id = id).all()
+    return render_template('view.html', post = post, form = form, comments = comments)
+
+
+
 
 @app.route('/home')
 @login_required # Flask-login provided decorator that allows only logged in users to access
 def home():
     return render_template('logged.html')
+
+@app.route('/post', methods = ['GET', 'POST'])
+@login_required
+def post(): # Allow users to post messages for everyone
+    form = PostForm()
+    if request.method == 'POST':
+        username = current_user.username
+        title = form.title.data
+        post_content = form.post_content.data
+        post = Post(
+            username = username,
+            title = title,
+            post_content = post_content
+        )
+        db.session.add(post)
+        db.session.commit()
+    return render_template("post.html", form = form)
 
 
 @app.route("/logout")

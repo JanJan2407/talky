@@ -1,0 +1,26 @@
+{% extends "template.html" %}
+{% block title %}Public posts{% endblock %}
+
+{% block body %}
+<div class="container my_display">
+        {% for batch in posts | batch(2) %}
+            <section class="row">
+                {% for post in batch %}
+                    <section class = "col-6 card">
+                        <a href="/view/{{ post.id }}" class="btn"></a>
+                        <section>
+                            <section class="card-body" style="height: 20vh; overflow-y: auto;">
+                                <h3 class="card-title">{{ post.title }}</h3>
+                                <p class="card-text">{{ post.post_content }}</p>
+                            </section>
+                            <section>
+                                <p class="card-footer">Author: {{ post.username }}</p>
+                            </section>
+                        </section>
+                        </a>
+                    </section>
+                {% endfor %}
+            </section>
+        {% endfor %}
+</div>
+{% endblock %}

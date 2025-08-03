@@ -34,4 +34,20 @@ top: 13px;
     width: 50%;
     margin:10px 25%;
 }
+
+#post{
+    width: 90%;
+    height: 50vh;
+    margin: 5%;
+    margin-top: 1vh;
+}
     
+#title{
+    width: 90%;
+    height: 10vh;
+    margin: 5%;
+    margin-bottom: 0;
+}
+.my_display > *{
+    margin: 5% 0;
+}

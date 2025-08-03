@@ -1,0 +1,24 @@
+{% extends "template.html" %}
+{% block title %}Post {{post.id}} {% endblock %}
+
+{% block body %}
+    <section>
+        <section style="height: auto; overflow-y: auto;">
+            <h3>{{ post.title }}</h3>
+            <p>{{ post.post_content }}</p>
+        </section>
+        <section>
+            <p class="card-footer">Author: {{ post.username }}</p>
+        </section>
+    </section>
+    <form method="post" action="/view/{{ post.id }}">
+        <input type="text" name="comment" style="display: inline-block;" placeholder="Add a comment">
+        <button type="submit" style="display: inline-block;">Add</button>
+    </form>
+    <hr>
+    <section>
+        {% for comment in comments %}
+        <p>{{ comment.username }}: {{ comment.content }}</p>
+        {% endfor %}
+    </section>
+{% endblock %}

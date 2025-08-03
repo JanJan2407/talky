@@ -1,0 +1,13 @@
+{% extends "template.html" %}
+{% block title %}Create a new post{% endblock %}
+
+{% block body %}
+<form action="/post" method="post">
+    
+    {{ form.hidden_tag() }} 
+    <input name="title" id="title" class="center" type="text" placeholder="Title" autofocus autocomplete="off">
+    <input name="post_content" id="post" class="center" type="text" placeholder="Write your message" autocomplete="off">
+    <button type="submit" class="btn btn-primary">Submit</button>
+
+</form>
+{% endblock %}
