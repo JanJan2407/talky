@@ -15,6 +15,11 @@
                             </section>
                             <section>
                                 <p class="card-footer">Author: {{ post.username }}</p>
+                                {% if current_user.username == post.username %}
+                                <form method="post" action="/remove/{{ post.id }}">
+                                    <button type="submit">Remove</button>
+                                </form>
+                                {% endif %}
                             </section>
                         </section>
                         </a>

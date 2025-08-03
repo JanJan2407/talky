@@ -151,21 +151,31 @@ def logout():
     logout_user()
     return redirect('/')
 
-@app.route("/remove/<post_id>/<comment_id>") # Removes a comment 
+@app.route("/remove/<int:post_id>", methods = ['POST']) # Removes a post
+@app.route("/remove/<int:post_id>/<int:comment_id>", methods = ['POST']) # Removes a comment 
 @login_required
-def remove(post_id, comment_id):
+def remove(post_id, comment_id = None):
     post = Post.query.filter_by(id = post_id).first()
-    comments = json.loads(post.comments)
-    for i in range(len(comments)):
-        if comments[i]['id'] == int(comment_id):
-            comment = comments[i]
-            comment_index = i
-            break
+    if comment_id != None: # Comment will be deleated 
+        print("Here")
+        comments = json.loads(post.comments)
+        for i in range(len(comments)):
+            if comments[i]['id'] == int(comment_id):
+                comment = comments[i]
+                comment_index = i
+                break
 
-    # Only if you are the commenter or the owner of the post
-    if current_user.username == post.username or current_user.username == comment['username']:
-        comments.pop(comment_index)
-        post.comments = json.dumps(comments)
+        # Only if you are the commenter or the owner of the post
+        if current_user.username == post.username or current_user.username == comment['username']:
+            comments.pop(comment_index)
+            post.comments = json.dumps(comments)
+            db.session.commit()
+
+        return redirect(f'/view/{ post_id }')
+    
+    elif current_user.username == post.username: # Post will be deleated
+        db.session.delete(post)
         db.session.commit()
+        return redirect('/posts')
 
-    return redirect(f'/view/{ post_id }')
+    

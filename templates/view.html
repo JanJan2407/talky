@@ -20,7 +20,11 @@
         {% for comment in comments %}
         <div>
         <p>{{ comment['username'] }}: {{ comment['content'] }}</p>
-        <a method="post" href="/remove/{{ post.id }}/{{ comment['id'] }}">Remove</a>
+        {% if current_user.username == post.username or current_user.username == comment['username'] %}
+        <form method="post" action="/remove/{{ post.id }}/{{ comment['id'] }}">
+            <button type="submit">Remove</button>
+        </form>
+        {% endif %}
         </div>
         {% endfor %}
     </section>
