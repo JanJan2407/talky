@@ -48,6 +48,6 @@ top: 13px;
     margin: 5%;
     margin-bottom: 0;
 }
-.my_display > *{
+.my_display > *{ /* all imediate child elements of class my_display */
     margin: 5% 0;
 }

@@ -1,11 +1,12 @@
 from hashlib import sha256
+import json #Java script object notation to help store comments on a post in 1 string 
 
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, login_required, current_user, logout_user
 
 from resources import app, db, login_manager
 from forms import LoginForm, RegistrationForm, PostForm, CommentForm
-from models import User, Post, Comment
+from models import User, Post
 from helpers import valid_error
 
 # Loads the user if logged in
@@ -27,7 +28,7 @@ def register():
     if request.method == 'POST':
         for field in ['name', 'username', 'email', 'phone', 'password', 'password_confirm']: # Checks that all input fields exist
             if not request.form[field]:
-                return render_template('register.html', error_msg = f"Missing field '{field}'")
+                return render_template('register.html', error_msg = f"Missing field '{field}'", form = form)
             
         if form.password.data == form.password_confirm.data:
             password_hash = sha256(form.password.data.encode()).hexdigest() # Takes password that user provided and hashes it with sha256 returning hexadecimal value 
@@ -86,41 +87,43 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/users')
+@app.route('/users') # Display all users
 def user_list():
     users = User.query.filter_by().all()
     return render_template('userlist.html', users = users)
 
-@app.route('/posts')
+@app.route('/posts') # Display all posts
 def show_posts():
     posts = Post.query.filter_by().all()
     return render_template('posts.html', posts = posts)
 
-@app.route('/view/<id>', methods = ['GET', 'POST'])
+@app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displayes any comments on the post
 def view(id):
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
-
-    if request.method == 'POST':
-        comment = form.comment.data
-        print(comment)
-        new = Comment(
-            post_id = post.id,
-            content = comment,
-            username = current_user.username
-        )
-        db.session.add(new)
-        db.session.commit()
-
-    comments = Comment.query.filter_by(post_id = id).all()
+    comments = json.loads(post.comments)
     return render_template('view.html', post = post, form = form, comments = comments)
 
 
+@app.route('/view/post/<id>', methods = ['POST'])
+@login_required # Logged in users can add coments to posts
+def add_comment(id):
+    form = CommentForm()
+    post = Post.query.filter_by(id = id).first()
+    comment = form.comment.data
+    username = current_user.username
+    current_comments = json.loads(post.comments)
+    comment_id = post.comment_id
+    current_comments.append({'username': username, 'content': comment, 'id' : comment_id}) # Adds a comment
+    post.comments = json.dumps(current_comments)
+    post.comment_id += 1
+    db.session.commit()
+    return redirect(f'/view/{id}')
 
 
 @app.route('/home')
-@login_required # Flask-login provided decorator that allows only logged in users to access
-def home():
+@login_required
+def hello():
     return render_template('logged.html')
 
 @app.route('/post', methods = ['GET', 'POST'])
@@ -138,6 +141,7 @@ def post(): # Allow users to post messages for everyone
         )
         db.session.add(post)
         db.session.commit()
+
     return render_template("post.html", form = form)
 
 
@@ -146,3 +150,22 @@ def post(): # Allow users to post messages for everyone
 def logout():
     logout_user()
     return redirect('/')
+
+@app.route("/remove/<post_id>/<comment_id>") # Removes a comment 
+@login_required
+def remove(post_id, comment_id):
+    post = Post.query.filter_by(id = post_id).first()
+    comments = json.loads(post.comments)
+    for i in range(len(comments)):
+        if comments[i]['id'] == int(comment_id):
+            comment = comments[i]
+            comment_index = i
+            break
+
+    # Only if you are the commenter or the owner of the post
+    if current_user.username == post.username or current_user.username == comment['username']:
+        comments.pop(comment_index)
+        post.comments = json.dumps(comments)
+        db.session.commit()
+
+    return redirect(f'/view/{ post_id }')

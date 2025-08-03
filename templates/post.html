@@ -4,7 +4,7 @@
 {% block body %}
 <form action="/post" method="post">
     
-    {{ form.hidden_tag() }} 
+    {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
     <input name="title" id="title" class="center" type="text" placeholder="Title" autofocus autocomplete="off">
     <input name="post_content" id="post" class="center" type="text" placeholder="Write your message" autocomplete="off">
     <button type="submit" class="btn btn-primary">Submit</button>

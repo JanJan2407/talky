@@ -3,13 +3,13 @@
 
 {% block body %}
 <div class="container my_display">
-        {% for batch in posts | batch(2) %}
+        {% for batch in posts | batch(2) %} <!-- Display posts in grid of 2 per row in bootstrap grid -->
             <section class="row">
                 {% for post in batch %}
                     <section class = "col-6 card">
                         <a href="/view/{{ post.id }}" class="btn"></a>
                         <section>
-                            <section class="card-body" style="height: 20vh; overflow-y: auto;">
+                            <section class="card-body" style="height: 20vh; overflow-y: auto;"> <!-- Too long posts will be made scrollable-->
                                 <h3 class="card-title">{{ post.title }}</h3>
                                 <p class="card-text">{{ post.post_content }}</p>
                             </section>

@@ -18,9 +18,5 @@ class Post(db.Model):
     username: Mapped[str]
     title: Mapped[str]
     post_content: Mapped[str]
-
-class Comment(db.Model):
-    id: Mapped[int] = mapped_column(primary_key = True)
-    post_id: Mapped[int] = mapped_column()
-    content: Mapped[str]
-    username: Mapped[str]
+    comments: Mapped[str] = mapped_column(default = '[]')
+    comment_id: Mapped[int] = mapped_column(default = 0) # Keeps track of how many comments in total were placed on a perticular post

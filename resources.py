@@ -10,7 +10,7 @@ app.secret_key = key # This is a private secret key
 
 db = SQLAlchemy(app)
 
-from models import User
+from models import *
 # Create or open a database with Colums for User
 with app.app_context():
     db.create_all()

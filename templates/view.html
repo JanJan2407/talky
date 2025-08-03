@@ -2,7 +2,7 @@
 {% block title %}Post {{post.id}} {% endblock %}
 
 {% block body %}
-    <section>
+    <section> <!-- Display post -->
         <section style="height: auto; overflow-y: auto;">
             <h3>{{ post.title }}</h3>
             <p>{{ post.post_content }}</p>
@@ -11,14 +11,17 @@
             <p class="card-footer">Author: {{ post.username }}</p>
         </section>
     </section>
-    <form method="post" action="/view/{{ post.id }}">
+    <form method="post" action="/view/post/{{ post.id }}"> <!-- Form that allows to add comment if user is logged in -->
         <input type="text" name="comment" style="display: inline-block;" placeholder="Add a comment">
         <button type="submit" style="display: inline-block;">Add</button>
     </form>
     <hr>
-    <section>
+    <section> <!-- Display comments -->
         {% for comment in comments %}
-        <p>{{ comment.username }}: {{ comment.content }}</p>
+        <div>
+        <p>{{ comment['username'] }}: {{ comment['content'] }}</p>
+        <a method="post" href="/remove/{{ post.id }}/{{ comment['id'] }}">Remove</a>
+        </div>
         {% endfor %}
     </section>
 {% endblock %}

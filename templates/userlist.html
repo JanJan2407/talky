@@ -7,7 +7,7 @@
 
     <input type="text" id="search_name" onkeyup="searchUser()" placeholder="Search for username" class="center"> <!--Input field for searching users-->
 
-    <ul class="center no-list-style" id="userlist">
+    <ul class="center no-list-style" id="userlist"> <!-- Display users that match search input -->
         {% for user in users %}
         <li>{{ user.username }}</li>
         {% endfor %}

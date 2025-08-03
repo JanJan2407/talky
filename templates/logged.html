@@ -3,7 +3,7 @@
 {% block body %}
   <h1>You are logged in</h1>
   {% if current_user.is_authenticated %}
-    Hi {{ current_user.name }}!
+    Hi {{ current_user.username }}!
   {% endif %}
   <a href="/logout" class="btn btn-primary">Log out</a>
 {% endblock %}
