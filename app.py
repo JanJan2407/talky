@@ -1,5 +1,7 @@
 from hashlib import sha256
-import json #Java script object notation to help store comments on a post in 1 string 
+import json # Java script object notation to help store comments on a post in 1 string 
+import time
+from datetime import datetime, UTC
 
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, login_required, current_user, logout_user
@@ -82,7 +84,7 @@ def login():
     return render_template('login.html', form = form)
 
 
-@app.route('/') # Not done yet currently displays progress
+@app.route('/') # Not done yet currently displays progres
 def index():
     return render_template('index.html')
 
@@ -102,19 +104,21 @@ def view(id):
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
     comments = json.loads(post.comments)
-    return render_template('view.html', post = post, form = form, comments = comments)
+    date = datetime.fromtimestamp(post.time, UTC) # Creates datetime object with UTC time info stored
+    return render_template('view.html', post = post, form = form, comments = comments, date = date)
 
 
 @app.route('/view/post/<id>', methods = ['POST'])
 @login_required # Logged in users can add coments to posts
 def add_comment(id):
+    comment_time = int(time.time())
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
     comment = form.comment.data
     username = current_user.username
     current_comments = json.loads(post.comments)
     comment_id = post.comment_id
-    current_comments.append({'username': username, 'content': comment, 'id' : comment_id}) # Adds a comment
+    current_comments.append({'username': username, 'content': comment, 'id' : comment_id, 'time' : comment_time}) # Adds a comment
     post.comments = json.dumps(current_comments)
     post.comment_id += 1
     db.session.commit()
@@ -131,13 +135,15 @@ def hello():
 def post(): # Allow users to post messages for everyone
     form = PostForm()
     if request.method == 'POST':
+        current_time = time.time() # In seconds since epoch (Jan 1st 1970 UTC)
         username = current_user.username
         title = form.title.data
         post_content = form.post_content.data
         post = Post(
             username = username,
             title = title,
-            post_content = post_content
+            post_content = post_content,
+            time = current_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
         )
         db.session.add(post)
         db.session.commit()

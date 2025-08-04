@@ -8,7 +8,7 @@
             <p>{{ post.post_content }}</p>
         </section>
         <section>
-            <p class="card-footer">Author: {{ post.username }}</p>
+            <p class="card-footer">Author: {{ post.username }}, Posted on: {{ moment(date).format('h:mm:ss a') }}</p>
         </section>
     </section>
     <form method="post" action="/view/post/{{ post.id }}"> <!-- Form that allows to add comment if user is logged in -->
@@ -19,7 +19,7 @@
     <section> <!-- Display comments -->
         {% for comment in comments %}
         <div>
-        <p>{{ comment['username'] }}: {{ comment['content'] }}</p>
+        <p>{{ comment['username'] }}: {{ comment['content'] }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
         {% if current_user.username == post.username or current_user.username == comment['username'] %}
         <form method="post" action="/remove/{{ post.id }}/{{ comment['id'] }}">
             <button type="submit">Remove</button>

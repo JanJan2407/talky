@@ -1,6 +1,7 @@
 '''Structure of the table in database'''
 
-from sqlalchemy.orm import Mapped, mapped_column 
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime
 from flask_login import  UserMixin
 
 from resources import db
@@ -18,5 +19,6 @@ class Post(db.Model):
     username: Mapped[str]
     title: Mapped[str]
     post_content: Mapped[str]
+    time: Mapped[int] # Time since epoch 1st of January 1970 in UTC timezone, gets converted to actual time with users timezone
     comments: Mapped[str] = mapped_column(default = '[]')
     comment_id: Mapped[int] = mapped_column(default = 0) # Keeps track of how many comments in total were placed on a perticular post

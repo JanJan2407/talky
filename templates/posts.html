@@ -14,7 +14,8 @@
                                 <p class="card-text">{{ post.post_content }}</p>
                             </section>
                             <section>
-                                <p class="card-footer">Author: {{ post.username }}</p>
+                                <!-- For time I use flask-moment and a python function get_date() from helpers-->
+                                <p class="card-footer center">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
                                 {% if current_user.username == post.username %}
                                 <form method="post" action="/remove/{{ post.id }}">
                                     <button type="submit">Remove</button>
