@@ -8,7 +8,7 @@
             <p>{{ post.post_content }}</p>
         </section>
         <section>
-            <p class="card-footer">Author: {{ post.username }}, Posted on: {{ moment(date).format('h:mm:ss a') }}</p>
+            <p class="card-footer">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('h:mm:ss a') }}</p>
         </section>
     </section>
     <form method="post" action="/view/post/{{ post.id }}"> <!-- Form that allows to add comment if user is logged in -->

@@ -104,8 +104,7 @@ def view(id):
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
     comments = json.loads(post.comments)
-    date = datetime.fromtimestamp(post.time, UTC) # Creates datetime object with UTC time info stored
-    return render_template('view.html', post = post, form = form, comments = comments, date = date)
+    return render_template('view.html', post = post, form = form, comments = comments)
 
 
 @app.route('/view/post/<id>', methods = ['POST'])
