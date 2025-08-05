@@ -1,0 +1,37 @@
+{% extends "template.html" %}
+{% block title %}Public posts{% endblock %}
+
+{% block body %}
+<div class="container my_display">
+        {% for batch in posts | batch(2) %} <!-- Display posts in grid of 2 per row in bootstrap grid -->
+            <section class="row">
+                {% for post in batch %}
+                    <section class = "col-6 card">
+                        <a href="/view/{{ post.id }}" class="btn"></a>
+                        <section>
+                            <section class="card-body" style="height: 20vh; overflow-y: auto;"> <!-- Too long posts will be made scrollable-->
+                                <h3 class="card-title">{{ post.title }}</h3>
+                                <p class="card-text">{{ post.post_content }}</p>
+                            </section>
+                            <section>
+                                <!-- For time I use flask-moment and a python function get_date() from helpers-->
+                                <p class="card-footer center">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ loads(post.likes)['count'] }} Dislikes: {{ loads(post.dislikes)['count'] }}</p> <!-- loads is python function that transforms json format to actual dict  -->
+                                {% if current_user.username == post.username %}
+                                <form method="post" action="/remove/{{ post.id }}">
+                                    <button type="submit">Remove</button>
+                                </form>
+                                {% endif %}
+                                <form action="/react/{{ post.id }}" method="post"> <!-- Form to like/dislike selected button is in color black otherone is white-->
+                                    <button class="btn {% if current_user.username in loads(post.likes)['names'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
+                                    <button class="btn {% if current_user.username in loads(post.dislikes)['names'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
+                                </form>
+                            </section>
+                        </section>
+                        </a>
+                    </section>
+                {% endfor %}
+            </section>
+        {% endfor %}
+</div>
+
+{% endblock %}
