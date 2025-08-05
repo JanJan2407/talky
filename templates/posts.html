@@ -2,7 +2,7 @@
 {% block title %}Public posts{% endblock %}
 
 {% block body %}
-<div class="container my_displa">
+<div class="container my_display">
         {% for batch in posts | batch(2) %} <!-- Display posts in grid of 2 per row in bootstrap grid -->
             <section class="row">
                 {% for post in batch %}
@@ -33,5 +33,6 @@
             </section>
         {% endfor %}
 </div>
+
 
 {% endblock %}
