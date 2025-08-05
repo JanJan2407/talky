@@ -1,7 +1,6 @@
 from hashlib import sha256
 import json # Java script object notation to help store comments on a post in 1 string 
 import time
-from datetime import datetime, UTC
 
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, login_required, current_user, logout_user
@@ -117,11 +116,70 @@ def add_comment(id):
     username = current_user.username
     current_comments = json.loads(post.comments)
     comment_id = post.comment_id
-    current_comments.append({'username': username, 'content': comment, 'id' : comment_id, 'time' : comment_time}) # Adds a comment
+    current_comments.append({'username': username, 'content': comment, 'id' : comment_id, 'time': comment_time, 'likes': {"count" : 0, "names" : []}, 'dislikes': {"count" : 0, "names" : []}}) # Adds a comment
     post.comments = json.dumps(current_comments)
     post.comment_id += 1
     db.session.commit()
     return redirect(f'/view/{id}')
+
+
+@app.route("/react/<int:post_id>", methods = ['POST']) # React to a post
+@app.route("/react/<int:post_id>/<int:comment_id>", methods = ['POST']) # React to a comment 
+@login_required # Login users can like/dislike
+def like_dislike(post_id, comment_id = -1):
+    reaction = request.form.get('reaction') # Like or dislike string
+    post = Post.query.filter_by(id = post_id).first()
+    username = current_user.username
+    if comment_id == -1: # If post will be liked
+        likes = json.loads(post.likes)
+        dislikes = json.loads(post.dislikes)
+    else:
+        current_comments = json.loads(post.comments)
+        for i, comment in enumerate(current_comments):
+            if comment['id'] == comment_id:
+                index = i
+                chosen_comment = comment
+
+        likes = chosen_comment['likes']
+        dislikes = chosen_comment['dislikes']
+
+    liked_before =  username in likes['names']
+    disliked_before = username in dislikes['names']    
+    if reaction == 'like':
+        if liked_before:
+            likes['names'].remove(username)
+            likes['count'] -= 1
+        else:
+            likes['names'].append(username)
+            likes['count'] += 1
+            if disliked_before:
+                dislikes['names'].remove(username)
+                dislikes['count'] -= 1
+
+    elif reaction == 'dislike':
+        if disliked_before:        
+            dislikes['names'].remove(username)
+            dislikes['count'] -= 1
+        else:
+            dislikes['names'].append(username)
+            dislikes['count'] += 1
+            if liked_before:
+                likes['names'].remove(username)
+                likes['count'] -= 1
+
+    # Adds to db
+    if comment_id == -1:
+        post.likes = json.dumps(likes)
+        post.dislikes = json.dumps(dislikes)
+        db.session.commit()
+        return redirect('/posts')
+    else:
+        chosen_comment['likes'] = likes
+        chosen_comment['dislikes'] = dislikes
+        current_comments[index] = chosen_comment
+        post.comments = json.dumps(current_comments)
+        db.session.commit()
+        return redirect(f'/view/{post_id}')
 
 
 @app.route('/home')
