@@ -1,14 +1,16 @@
 from hashlib import sha256
 import json # Java script object notation to help store comments on a post in 1 string 
 import time
+import os
 
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, send_from_directory
 from flask_login import login_user, login_required, current_user, logout_user
-
+from werkzeug.utils import secure_filename
+from PIL import Image
 from resources import app, db, login_manager
 from forms import LoginForm, RegistrationForm, PostForm, CommentForm
 from models import User, Post
-from helpers import valid_error
+from helpers import valid_error, allowed_file
 
 # Loads the user if logged in
 @login_manager.user_loader
@@ -48,7 +50,7 @@ def register():
             db.session.add(user)
             db.session.commit()
         except Exception:
-            return render_template('register.html', form = form, error_msg = "Username already taken") # Every form=form just tells the page structure of the form it's neccecary for page to work
+            return render_template('register.html', form = form, error_msg = "Username already taken") # Every form=form just tells the page structure of the form it's necessary for page to work
 
         return redirect('/')
     return render_template('register.html', form = form)
@@ -83,7 +85,7 @@ def login():
     return render_template('login.html', form = form)
 
 
-@app.route('/') # Not done yet currently displays progres
+@app.route('/') # Not done yet currently displays progress
 def index():
     return render_template('index.html')
 
@@ -98,16 +100,19 @@ def show_posts():
     posts = Post.query.filter_by().all()
     return render_template('posts.html', posts = posts)
 
-@app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displayes any comments on the post
+@app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displays any comments on the post
 def view(id):
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
     comments = json.loads(post.comments)
     return render_template('view.html', post = post, form = form, comments = comments)
 
+@app.route('/images/<filename>') # Allows me to access images in folder instance (folder is created on run if it doesn't exist)
+def get_image(filename):
+    return send_from_directory(app.config['POST_UPLOAD_FOLDER'], filename)
 
 @app.route('/view/post/<id>', methods = ['POST'])
-@login_required # Logged in users can add coments to posts
+@login_required # Logged in users can add comments to posts
 def add_comment(id):
     comment_time = int(time.time())
     form = CommentForm()
@@ -195,15 +200,30 @@ def post(): # Allow users to post messages for everyone
         current_time = time.time() # In seconds since epoch (Jan 1st 1970 UTC)
         username = current_user.username
         title = form.title.data
-        post_content = form.post_content.data
+        post_content = form.post_content.data # Body of form
         post = Post(
             username = username,
             title = title,
             post_content = post_content,
             time = current_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
         )
+
         db.session.add(post)
         db.session.commit()
+
+        file = form.image.data # Optional image of form
+        if file:
+            filename = secure_filename(file.filename)
+            if allowed_file(filename): # Checks if file has a valid suffix
+                img = Image.open(file) # Open img with Python image library
+                jpg_img = img.convert('RGB') # Convert opened image to jpg because it is much smaller
+                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
+                post.is_image = True # Tells db that img was provided
+                db.session.commit() # Second commit is needed to save potential new img
+
+            else:
+                return render_template("post.html", form = form, error='Only .jpg, .png or .jpeg are allowed')
+
 
     return render_template("post.html", form = form)
 
@@ -219,8 +239,7 @@ def logout():
 @login_required
 def remove(post_id, comment_id = None):
     post = Post.query.filter_by(id = post_id).first()
-    if comment_id != None: # Comment will be deleated 
-        print("Here")
+    if comment_id: # Comment will be deleted 
         comments = json.loads(post.comments)
         for i in range(len(comments)):
             if comments[i]['id'] == int(comment_id):
@@ -236,9 +255,7 @@ def remove(post_id, comment_id = None):
 
         return redirect(f'/view/{ post_id }')
     
-    elif current_user.username == post.username: # Post will be deleated
+    elif current_user.username == post.username: # Post will be deleted
         db.session.delete(post)
         db.session.commit()
         return redirect('/posts')
-
-    

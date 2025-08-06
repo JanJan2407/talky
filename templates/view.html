@@ -5,6 +5,9 @@
     <section> <!-- Display post -->
         <section style="height: auto; overflow-y: auto;">
             <h3>{{ post.title }}</h3>
+            {% if post.is_image %} <!-- If img was provided-->
+                <img style="width: 40%; float: right;" src="{{ url_for('get_image', filename='postimage_' ~ post.id ~ '.jpg') }}">
+            {% endif %}
             <p>{{ post.post_content }}</p>
         </section>
         <section>
