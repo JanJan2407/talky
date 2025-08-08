@@ -1,0 +1,72 @@
+{# A recursive function that displays all comments and their replies #}
+{% macro render_comment(comment, comment_reactions, post, current_user, get_date, moment, x) %} {# x is how deep the comment is nested, used for indentation each indentation x is 2% larger #}
+    {% if x is not defined %}
+        {% set x = 0 %}
+    {% endif %}
+    {# Display the comment with its content, username, time, and reactions #}
+    <div style="margin-left: {{x}}%;">
+        <p>{{ comment.username }}: {{ comment.content }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }}
+        Likes: {{ comment_reactions[comment.id]['like_count'] }} Dislikes: {{ comment_reactions[comment.id]['dislike_count'] }}</p>
+
+        {# Like/dislike #}
+        <form action="/react/{{ post.id }}//{{ comment.id }} " style="display: inline;" method="post">
+            <button class="btn {% if current_user.username in comment_reactions[comment.id]['liked_by'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
+            <button class="btn {% if current_user.username in comment_reactions[comment.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
+        </form>
+
+        {# Add a reply #}
+        <form method="post" action="/view/post/{{ post.id }}/{{ comment.id }}" style="display: inline;"> 
+            <input type="text" name="comment" style="display: inline-block;" placeholder="Reply to this comment">
+            <button type="submit" style="display: inline-block;">Reply</button>
+        </form>
+
+        {# Button to remove a comment if and only if you are the owner or you are the owner of a post this comment was made on #}
+        {% if current_user.username == post.username or current_user.username == comment.username %}
+        <form method="post" action="/remove/{{ post.id }}/{{ comment.id }}">
+            <button type="submit">Remove</button>
+        </form>
+        {% endif %}
+    </div>
+    
+    {# Recursively render replies to this comment if they exist#}
+        {% for reply in get_replies(comment.id) %}
+            {{ render_comment(reply, comment_reactions, post, current_user, get_date, moment, x + 2) }}
+        {% endfor %}
+
+{% endmacro %}
+
+{# Main template for displaying posts in a grid format #}
+{% macro display_post(posts, current_user, post_reactions, get_date, moment) %}
+    {% for batch in posts | batch(2) %} <!-- Display posts in grid of 2 per row in bootstrap grid -->
+        <section class="row">
+            {% for post in batch %}
+                <section class = "col-6 card">
+                    <a href="/view/{{ post.id }}" class="btn"></a>
+                    <section>
+                        {% if post.is_image %} <!-- Display image if it was provided -->
+                            <img class="card-img-top center" style="width: 50%; margin: auto; display: block;" src="{{ url_for('get_image', filename='postimage_' ~ post.id ~ '.jpg') }}">
+                        {% endif %}
+                        <section class="card-body" style="height: 20vh; overflow-y: auto;"> <!-- Too long posts will be made scrollable-->
+                            <h3 class="card-title">{{ post.title }}</h3>
+                            <p class="card-text">{{ post.post_content }}</p>
+                        </section>
+                        <section>
+                            <!-- For time I use flask-moment and a python function get_date() from helpers-->
+                            <p class="card-footer center">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ post_reactions[post.id]['like_count'] }} Dislikes: {{ post_reactions[post.id]['dislike_count'] }}, {{ post.is_image }}</p> <!-- Post_reactions is a dict of all reactions to all posts -->
+                            {% if current_user.username == post.username %}
+                            <form method="post" action="/remove/{{ post.id }}">
+                                <button type="submit">Remove</button>
+                            </form>
+                            {% endif %}
+                            <form action="/react/{{ post.id }}" method="post"> <!-- Form to like/dislike selected button is in color black other one is white-->
+                                <button class="btn {% if current_user.username in post_reactions[post.id]['liked_by'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
+                                <button class="btn {% if current_user.username in post_reactions[post.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
+                            </form>
+                        </section>
+                    </section>
+                    </a>
+                </section>
+            {% endfor %}
+        </section>
+    {% endfor %}
+{% endmacro %}

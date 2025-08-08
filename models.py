@@ -20,8 +20,6 @@ class Post(db.Model):
     is_image: Mapped[bool] = mapped_column(default = False)# Link to image stored in a separate folder
     post_content: Mapped[str]
     time: Mapped[int] # Time since epoch 1st of January 1970 in UTC timezone, gets converted to actual time with users timezone
-    likes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' ) # In JSON holding a dictionary with amount of likes and a list of all usernames that liked same structure used for dislikes
-    dislikes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' )
 
 class Comment(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -31,10 +29,11 @@ class Comment(db.Model):
     time: Mapped[int]  # epoch time
     likes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' ) # In JSON holding a dictionary with amount of likes and a list of all usernames that liked same structure used for dislikes
     dislikes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' )
+    parent_id: Mapped[int] = mapped_column(nullable = True, default = None) # parent_id is used to link comments to their parent comment, if it's None then it's a top-level comment, used for comment replies
 
 class Like(db.Model):
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key = True)
     post_id: Mapped[int]
-    comment_id: Mapped[int] = mapped_column(nullable=True, default=None)  # None for post, set for comment
+    comment_id: Mapped[int] = mapped_column(nullable = True, default = None)  # None for post, set for comment
     username: Mapped[str]
     is_like: Mapped[bool]  # True for like, False for dislike

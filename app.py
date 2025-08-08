@@ -139,22 +139,25 @@ def view(id):
 def get_image(filename):
     return send_from_directory(app.config['POST_UPLOAD_FOLDER'], filename)
 
-@app.route('/view/post/<id>', methods = ['POST'])
+@app.route('/view/post/<post_id>', methods = ['POST']) # Allows users to add comments to posts
+@app.route('/view/post/<post_id>/<comment_id>', methods = ['POST']) # Allows users to add replies to existing comments
 @login_required # Logged in users can add comments to posts
-def add_comment(id): # Id is the id of the post
+def add_comment(post_id, comment_id = None): 
     comment_time = int(time.time())
     form = CommentForm()
     comment = form.comment.data
     username = current_user.username
+    print(comment_id)
     comment = Comment(
-            post_id = id,
+            post_id = post_id,
             username = username,
             content = comment,
-            time = comment_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
+            time = comment_time, # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
+            parent_id = comment_id# If comment_id is provided it means that this comment is a reply to another comment else it is a top-level comment with parent_id set to None 
         )
     db.session.add(comment) # Adds comment to db
     db.session.commit()
-    return redirect(f'/view/{id}')
+    return redirect(f'/view/{post_id}') # Redirects to the post that was commented on
 
 @app.route("/react/<int:post_id>", methods = ['POST']) # React to a post
 @app.route("/react/<int:post_id>/<int:comment_id>", methods = ['POST']) # React to a comment 
@@ -212,15 +215,14 @@ def post(): # Allow users to post messages for everyone
         if file:
             filename = secure_filename(file.filename)
             if allowed_file(filename): # Checks if file has a valid suffix
+                print('here')
                 img = Image.open(file) # Open img with Python image library
                 jpg_img = img.convert('RGB') # Convert opened image to jpg because it is much smaller
                 jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
                 post.is_image = True # Tells db that img was provided
                 db.session.commit() # Second commit is needed to save potential new img
-
             else:
                 return render_template("post.html", form = form, error='Only .jpg, .png or .jpeg are allowed')
-
 
     return render_template("post.html", form = form)
 
@@ -260,6 +262,12 @@ def remove(post_id, comment_id = None):
         reactions = Like.query.filter_by(post_id = post_id, comment_id = None).all()
         for reaction in reactions: # Deletes all reactions to the post itself
             db.session.delete(reaction)
+
+        if post.is_image: # If post has an image the image will be deleted as well
+            try:
+                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], 'postimage_' + str(post.id) + '.jpg')) # Deletes the image from the folder
+            except Exception:
+                pass
 
         db.session.delete(post)
         db.session.commit()
