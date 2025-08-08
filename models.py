@@ -22,5 +22,12 @@ class Post(db.Model):
     time: Mapped[int] # Time since epoch 1st of January 1970 in UTC timezone, gets converted to actual time with users timezone
     likes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' ) # In JSON holding a dictionary with amount of likes and a list of all usernames that liked same structure used for dislikes
     dislikes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' )
-    comments: Mapped[str] = mapped_column(default = '[]')
-    comment_id: Mapped[int] = mapped_column(default = 1) # Keeps track of how many comments in total were placed on a particular post
+
+class Comment(db.Model):
+    id: Mapped[int] = mapped_column(primary_key=True)
+    post_id: Mapped[int]
+    username: Mapped[str]
+    content: Mapped[str]
+    time: Mapped[int]  # epoch time
+    likes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' ) # In JSON holding a dictionary with amount of likes and a list of all usernames that liked same structure used for dislikes
+    dislikes: Mapped[str] = mapped_column(default = '{"count" : 0, "names" : []}' )

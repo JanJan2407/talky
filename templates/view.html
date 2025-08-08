@@ -22,13 +22,13 @@
     <section> <!-- Display comments -->
         {% for comment in comments %}
         <div> 
-        <p>{{ comment['username'] }}: {{ comment['content'] }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ comment['likes']['count'] }} Dislikes: {{ comment['dislikes']['count'] }} </p>
-        <form action="/react/{{ post.id }}//{{ comment['id'] }}" method="post">
-            <button class="btn {% if current_user.username in comment['likes']['names'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
-            <button class="btn {% if current_user.username in comment['dislikes']['names'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
+        <p>{{ comment.username }}: {{ comment.content }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ loads(comment.likes)['count'] }} Dislikes: {{ loads(comment.dislikes)['count'] }}, </p>
+        <form action="/react/{{ post.id }}//{{ comment.id }}" method="post">
+            <button class="btn {% if current_user.username in loads(comment.likes)['names'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
+            <button class="btn {% if current_user.username in loads(comment.dislikes)['names'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
         </form>
-        {% if current_user.username == post.username or current_user.username == comment['username'] %}
-        <form method="post" action="/remove/{{ post.id }}/{{ comment['id'] }}">
+        {% if current_user.username == post.username or current_user.username == comment.username %}
+        <form method="post" action="/remove/{{ post.id }}/{{ comment.id }}">
             <button type="submit">Remove</button>
         </form>
         {% endif %}

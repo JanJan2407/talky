@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 from resources import app, db, login_manager
 from forms import LoginForm, RegistrationForm, PostForm, CommentForm
-from models import User, Post
+from models import User, Post, Comment
 from helpers import valid_error, allowed_file
 
 # Loads the user if logged in
@@ -103,8 +103,10 @@ def show_posts():
 @app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displays any comments on the post
 def view(id):
     form = CommentForm()
+    print(id)
     post = Post.query.filter_by(id = id).first()
-    comments = json.loads(post.comments)
+    comments = Comment.query.filter_by(post_id = id).all() # Gets all comments on the post
+    print(comments)
     return render_template('view.html', post = post, form = form, comments = comments)
 
 @app.route('/images/<filename>') # Allows me to access images in folder instance (folder is created on run if it doesn't exist)
@@ -113,17 +115,18 @@ def get_image(filename):
 
 @app.route('/view/post/<id>', methods = ['POST'])
 @login_required # Logged in users can add comments to posts
-def add_comment(id):
+def add_comment(id): # Id is the id of the post
     comment_time = int(time.time())
     form = CommentForm()
-    post = Post.query.filter_by(id = id).first()
     comment = form.comment.data
     username = current_user.username
-    current_comments = json.loads(post.comments)
-    comment_id = post.comment_id
-    current_comments.append({'username': username, 'content': comment, 'id' : comment_id, 'time': comment_time, 'likes': {"count" : 0, "names" : []}, 'dislikes': {"count" : 0, "names" : []}}) # Adds a comment
-    post.comments = json.dumps(current_comments)
-    post.comment_id += 1
+    comment = Comment(
+            post_id = id,
+            username = username,
+            content = comment,
+            time = comment_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
+        )
+    db.session.add(comment) # Adds comment to db
     db.session.commit()
     return redirect(f'/view/{id}')
 
@@ -139,14 +142,10 @@ def like_dislike(post_id, comment_id = -1):
         likes = json.loads(post.likes)
         dislikes = json.loads(post.dislikes)
     else:
-        current_comments = json.loads(post.comments)
-        for i, comment in enumerate(current_comments):
-            if comment['id'] == comment_id:
-                index = i
-                chosen_comment = comment
+        chosen_comment = Comment.query.filter_by(id = comment_id).first()
 
-        likes = chosen_comment['likes']
-        dislikes = chosen_comment['dislikes']
+        likes = json.loads(chosen_comment.likes)
+        dislikes = json.loads(chosen_comment.dislikes)
 
     liked_before =  username in likes['names']
     disliked_before = username in dislikes['names']    
@@ -179,10 +178,8 @@ def like_dislike(post_id, comment_id = -1):
         db.session.commit()
         return redirect('/posts')
     else:
-        chosen_comment['likes'] = likes
-        chosen_comment['dislikes'] = dislikes
-        current_comments[index] = chosen_comment
-        post.comments = json.dumps(current_comments)
+        chosen_comment.likes = json.dumps(likes)
+        chosen_comment.dislikes = json.dumps(dislikes)
         db.session.commit()
         return redirect(f'/view/{post_id}')
 
@@ -192,12 +189,13 @@ def like_dislike(post_id, comment_id = -1):
 def hello():
     return render_template('logged.html')
 
+
 @app.route('/post', methods = ['GET', 'POST'])
 @login_required
 def post(): # Allow users to post messages for everyone
     form = PostForm()
     if request.method == 'POST':
-        current_time = time.time() # In seconds since epoch (Jan 1st 1970 UTC)
+        current_time = int(time.time()) # In seconds since epoch (Jan 1st 1970 UTC)
         username = current_user.username
         title = form.title.data
         post_content = form.post_content.data # Body of form
@@ -240,17 +238,10 @@ def logout():
 def remove(post_id, comment_id = None):
     post = Post.query.filter_by(id = post_id).first()
     if comment_id: # Comment will be deleted 
-        comments = json.loads(post.comments)
-        for i in range(len(comments)):
-            if comments[i]['id'] == int(comment_id):
-                comment = comments[i]
-                comment_index = i
-                break
-
+        comment = Comment.query.filter_by(id = comment_id).first()
         # Only if you are the commenter or the owner of the post
-        if current_user.username == post.username or current_user.username == comment['username']:
-            comments.pop(comment_index)
-            post.comments = json.dumps(comments)
+        if current_user.username == post.username or current_user.username == comment.username:
+            db.session.delete(comment)
             db.session.commit()
 
         return redirect(f'/view/{ post_id }')
@@ -259,3 +250,5 @@ def remove(post_id, comment_id = None):
         db.session.delete(post)
         db.session.commit()
         return redirect('/posts')
+    
+    return redirect('/') # If you are not the owner of the post or comment you will be redirected to start page
