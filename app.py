@@ -1,5 +1,4 @@
 from hashlib import sha256
-import json # Java script object notation to help store comments on a post in 1 string 
 import time
 import os
 
@@ -9,7 +8,7 @@ from werkzeug.utils import secure_filename
 from PIL import Image
 from resources import app, db, login_manager
 from forms import LoginForm, RegistrationForm, PostForm, CommentForm
-from models import User, Post, Comment
+from models import User, Post, Comment, Like
 from helpers import valid_error, allowed_file
 
 # Loads the user if logged in
@@ -97,17 +96,44 @@ def user_list():
 
 @app.route('/posts') # Display all posts
 def show_posts():
-    posts = Post.query.filter_by().all()
-    return render_template('posts.html', posts = posts)
+    posts = Post.query.all()
+    reactions = Like.query.filter_by(comment_id = None).all()  # Only post reactions
+
+    # Build a dict: {post_id: {'likes': count, 'dislikes': count, 'liked_by': [...], 'disliked_by': [...]}}
+    post_reactions = {}
+    for post in posts:
+        likes = [r.username for r in reactions if r.post_id == post.id and r.is_like] # Get usernames of users who liked the post
+        dislikes = [r.username for r in reactions if r.post_id == post.id and not r.is_like] # Get usernames of users who disliked the post
+        post_reactions[post.id] = {
+            'like_count': len(likes),
+            'dislike_count': len(dislikes),
+            'liked_by': likes,
+            'disliked_by': dislikes
+        }
+
+    return render_template('posts.html', posts=posts, post_reactions=post_reactions)
 
 @app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displays any comments on the post
 def view(id):
     form = CommentForm()
-    print(id)
     post = Post.query.filter_by(id = id).first()
-    comments = Comment.query.filter_by(post_id = id).all() # Gets all comments on the post
-    print(comments)
-    return render_template('view.html', post = post, form = form, comments = comments)
+    comments = Comment.query.filter_by(post_id = id).all()
+    comment_ids = [c.id for c in comments]
+    reactions = Like.query.filter(Like.comment_id.in_(comment_ids)).all()  # Only reactions to comments
+
+    # Build a dict: {comment_id: {'like_count': ..., 'dislike_count': ..., 'liked_by': [...], 'disliked_by': [...]}}
+    comment_reactions = {}
+    for comment in comments:
+        likes = [r.username for r in reactions if r.comment_id == comment.id and r.is_like]
+        dislikes = [r.username for r in reactions if r.comment_id == comment.id and not r.is_like]
+        comment_reactions[comment.id] = {
+            'like_count': len(likes),
+            'dislike_count': len(dislikes),
+            'liked_by': likes,
+            'disliked_by': dislikes
+        }
+
+    return render_template('view.html', post = post, form = form, comments = comments, comment_reactions = comment_reactions)
 
 @app.route('/images/<filename>') # Allows me to access images in folder instance (folder is created on run if it doesn't exist)
 def get_image(filename):
@@ -130,65 +156,38 @@ def add_comment(id): # Id is the id of the post
     db.session.commit()
     return redirect(f'/view/{id}')
 
-
 @app.route("/react/<int:post_id>", methods = ['POST']) # React to a post
 @app.route("/react/<int:post_id>/<int:comment_id>", methods = ['POST']) # React to a comment 
 @login_required # Login users can like/dislike
-def like_dislike(post_id, comment_id = -1):
+def like_dislike(post_id, comment_id = None):
     reaction = request.form.get('reaction') # Like or dislike string
-    post = Post.query.filter_by(id = post_id).first()
     username = current_user.username
-    if comment_id == -1: # If post will be liked
-        likes = json.loads(post.likes)
-        dislikes = json.loads(post.dislikes)
+    if not comment_id: # If post will be liked
+        react = Like.query.filter_by(post_id = post_id, username = username, comment_id = None).first() # Selects the post that will be reacted to
     else:
-        chosen_comment = Comment.query.filter_by(id = comment_id).first()
+        react = Like.query.filter_by(post_id = post_id, username = username, comment_id = comment_id).first() # Selects the comment that will be reacted to
+    
+    if not react: # If user has not reacted to the post/comment yet
+        react = Like(
+            post_id = post_id,
+            comment_id = comment_id,
+            username = username,
+            is_like = reaction == 'like' # True if like, False if dislike
+        )
+        db.session.add(react)
+    else: # If user has already reacted to the post/comment
+        react.is_like = reaction == 'like' # Updates the reaction to like or dislike
 
-        likes = json.loads(chosen_comment.likes)
-        dislikes = json.loads(chosen_comment.dislikes)
-
-    liked_before =  username in likes['names']
-    disliked_before = username in dislikes['names']    
-    if reaction == 'like':
-        if liked_before:
-            likes['names'].remove(username)
-            likes['count'] -= 1
-        else:
-            likes['names'].append(username)
-            likes['count'] += 1
-            if disliked_before:
-                dislikes['names'].remove(username)
-                dislikes['count'] -= 1
-
-    elif reaction == 'dislike':
-        if disliked_before:        
-            dislikes['names'].remove(username)
-            dislikes['count'] -= 1
-        else:
-            dislikes['names'].append(username)
-            dislikes['count'] += 1
-            if liked_before:
-                likes['names'].remove(username)
-                likes['count'] -= 1
-
-    # Adds to db
-    if comment_id == -1:
-        post.likes = json.dumps(likes)
-        post.dislikes = json.dumps(dislikes)
-        db.session.commit()
-        return redirect('/posts')
-    else:
-        chosen_comment.likes = json.dumps(likes)
-        chosen_comment.dislikes = json.dumps(dislikes)
-        db.session.commit()
+    db.session.commit() # Saves the change to db
+    if not comment_id: # If post was liked/disliked
+        return redirect('/posts') 
+    else: # If comment was liked/disliked
         return redirect(f'/view/{post_id}')
-
 
 @app.route('/home')
 @login_required
 def hello():
     return render_template('logged.html')
-
 
 @app.route('/post', methods = ['GET', 'POST'])
 @login_required
@@ -225,7 +224,6 @@ def post(): # Allow users to post messages for everyone
 
     return render_template("post.html", form = form)
 
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -239,16 +237,33 @@ def remove(post_id, comment_id = None):
     post = Post.query.filter_by(id = post_id).first()
     if comment_id: # Comment will be deleted 
         comment = Comment.query.filter_by(id = comment_id).first()
+        reactions = Like.query.filter_by(comment_id = comment_id).all()
+        
         # Only if you are the commenter or the owner of the post
         if current_user.username == post.username or current_user.username == comment.username:
+            for reaction in reactions: # Deletes all reactions to the comment
+                db.session.delete(reaction)
+
             db.session.delete(comment)
             db.session.commit()
 
         return redirect(f'/view/{ post_id }')
     
     elif current_user.username == post.username: # Post will be deleted
+        comments = Comment.query.filter_by(post_id = post_id).all()
+        for comment in comments: # Deletes all comments on the post
+            reactions = Like.query.filter_by(post_id = post_id, comment_id = comment.id).all()
+            for reaction in reactions: # Deletes all reactions to the comment
+                db.session.delete(reaction)
+            db.session.delete(comment)
+
+        reactions = Like.query.filter_by(post_id = post_id, comment_id = None).all()
+        for reaction in reactions: # Deletes all reactions to the post itself
+            db.session.delete(reaction)
+
         db.session.delete(post)
         db.session.commit()
         return redirect('/posts')
     
     return redirect('/') # If you are not the owner of the post or comment you will be redirected to start page
+

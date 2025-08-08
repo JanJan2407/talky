@@ -1,4 +1,3 @@
-import json
 import os 
 from pathlib import Path
 
@@ -26,7 +25,6 @@ moment = Moment(app)
 db = SQLAlchemy(app)
 
 app.jinja_env.globals.update(get_date = get_date) # Adds get_date from helpers to app so I can use it with Jinja2 on page load
-app.jinja_env.globals.update(loads = json.loads) 
 
 from models import *
 # Create or open a database with columns for User

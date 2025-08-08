@@ -18,15 +18,15 @@
                             </section>
                             <section>
                                 <!-- For time I use flask-moment and a python function get_date() from helpers-->
-                                <p class="card-footer center">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ loads(post.likes)['count'] }} Dislikes: {{ loads(post.dislikes)['count'] }}, {{ post.is_image }}</p> <!-- loads is python function that transforms json format to actual dict  -->
+                                <p class="card-footer center">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ post_reactions[post.id]['like_count'] }} Dislikes: {{ post_reactions[post.id]['dislike_count'] }}, {{ post.is_image }}</p> <!-- Post_reactions is a dict of all reactions to all posts -->
                                 {% if current_user.username == post.username %}
                                 <form method="post" action="/remove/{{ post.id }}">
                                     <button type="submit">Remove</button>
                                 </form>
                                 {% endif %}
                                 <form action="/react/{{ post.id }}" method="post"> <!-- Form to like/dislike selected button is in color black other one is white-->
-                                    <button class="btn {% if current_user.username in loads(post.likes)['names'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
-                                    <button class="btn {% if current_user.username in loads(post.dislikes)['names'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
+                                    <button class="btn {% if current_user.username in post_reactions[post.id]['liked_by'] %} btn-dark {% endif %}" id="like" name="reaction" type="submit" value="like">Like</button>
+                                    <button class="btn {% if current_user.username in post_reactions[post.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
                                 </form>
                             </section>
                         </section>
