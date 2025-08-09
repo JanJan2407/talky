@@ -3,7 +3,11 @@
 {% block title %}Public posts{% endblock %}
 
 {% block body %}
-<div class="container my_display">
-    {{ display_post(posts, current_user, post_reactions, get_date, moment) }}<!-- Call the macro to display posts in a grid -->
+<h1 class="center">Posts</h1>
+<input class="center search" placeholder="Search by title" id="search_title" type="text" onkeyup="searchPost()">
+<input class="center search" placeholder="Search by author" id="search_author" type="text" onkeyup="searchPost()">
+<!-- Both searches can be used at the same time (searching for author and for title)-->
+<div class="grid_container" id="posts"> <!-- Call the macro to display posts in a grid -->
+    {{ display_post(posts, current_user, post_reactions, get_date, moment) }}
 </div>
 {% endblock %}
