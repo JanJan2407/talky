@@ -17,14 +17,16 @@
                 {% endif %}
                 </section>
             {% endfor %}
-            <p>{{ post.post_content }}</p>
+            {% for line in load(post.post_content) %} {# List has to be loaded because it was stored in JSON -- used to display text exactly as it was given #}
+                <p class="card-text">{{ line }}</p>
+            {% endfor %}
         </section>
         <section>
             <p class="card-footer">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('h:mm:ss a') }}</p>
         </section>
     </section>
     <form method="post" action="/view/post/{{ post.id }}"> <!-- Form that allows to add comment if user is logged in -->
-        <input type="text" name="comment" style="display: inline-block;" placeholder="Add a comment">
+        <textarea name="comment" style="display: inline-block;" placeholder="Add a comment"></textarea>
         <button type="submit" style="display: inline-block;">Add</button>
     </form>
     <hr>

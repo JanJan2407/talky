@@ -1,6 +1,7 @@
 from hashlib import sha256
 import time
 import os
+import json 
 
 from flask import render_template, request, redirect, url_for, send_from_directory
 from flask_login import login_user, login_required, current_user, logout_user
@@ -145,13 +146,13 @@ def get_image(filename):
 def add_comment(post_id, comment_id = None): 
     comment_time = int(time.time())
     form = CommentForm()
-    comment = form.comment.data
+    comment_content = json.dumps(form.comment.data.split('\r\n')) # Split on new line and convert list to JSON
     username = current_user.username
     print(comment_id)
     comment = Comment(
             post_id = post_id,
             username = username,
-            content = comment,
+            content = comment_content,
             time = comment_time, # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
             parent_id = comment_id# If comment_id is provided it means that this comment is a reply to another comment else it is a top-level comment with parent_id set to None 
         )
@@ -200,18 +201,17 @@ def post(): # Allow users to post messages for everyone
         current_time = int(time.time()) # In seconds since epoch (Jan 1st 1970 UTC)
         username = current_user.username
         title = form.title.data
-        post_content = form.post_content.data # Body of form
+        post_content = form.post_content.data.split('\r\n') # Body of form \r\n is used for new line in text so this makes store each paragraph and each line separately
         post = Post(
             username = username,
             title = title,
-            post_content = post_content,
+            post_content = json.dumps(post_content), # Creates a JSON list of all lines to be displayed
             time = current_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
         )
-
         db.session.add(post)
         db.session.commit()
 
-        files = form.images.data # Optional image of form
+        files = form.images.data # Optional images of form
         if files: # If 0 logical statement results in false otherwise it is true
             jpg_images =  []
             for file in files:
@@ -232,6 +232,64 @@ def post(): # Allow users to post messages for everyone
 
     return render_template("post.html", form = form)
 
+@app.route("/edit_post/<int:post_id>", methods = ['GET', 'POST']) # Edit a post
+@login_required
+def edit_post(post_id):
+    form = PostForm()
+    post = Post.query.filter_by(id = post_id).first()
+    if request.method == 'GET':
+        # If you are allowed to do it otherwise you get redirected back to main page 
+        # You can only ever get not allowed if you changed some html locally in an unintended way
+        if post.username == current_user.username: 
+            pass
+        else:
+            return redirect('/')
+        return render_template('editPost.html', form = form, post = post)
+    else:
+        edit_time = time.time()
+        # Loads current title and content
+        post.title = form.title.data 
+        post.post_content = json.dumps(form.post_content.data.split('\r\n'))
+        post.edit_time = edit_time
+        files = form.images.data # Optional images of form
+        if files: # If user decided to upload more files
+            jpg_images =  []
+            for file in files:
+                if allowed_file(secure_filename(file.filename)): # Checks if file has a valid suffix
+                    img = Image.open(file) # Open img with Python image library
+                    jpg_images.append(img.convert('RGB'))  # Convert opened image to jpg because it is much smaller
+                else:
+                    return render_template("editPost.html", form = form, post = post, error='Only .jpg, .png, .jpeg, .gif and .webp are allowed. Post was not uploaded')
+                
+            p_count = post.image_count # How many images were uploaded to that posts before editing, used it for loop for saving in order to save correctly
+            for i, jpg_img in enumerate(jpg_images): # i will be a sign of how many images this post have here i + p_count because some images already exist for this post
+                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], str(i + p_count) + 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
+            post.image_count += len(jpg_images)
+        db.session.commit()
+        return redirect('/posts')
+
+@app.route("/edit_comment/<int:post_id>/<int:comment_id>", methods = ['GET', 'POST']) # Edit a comment
+@login_required
+def edit_comment(post_id, comment_id):
+    form = CommentForm()
+    post = Post.query.filter_by(id = post_id).first()
+    comment = Comment.query.filter_by(id = comment_id).first()
+    if request.method == 'GET':
+        # If you are allowed to do it otherwise you get redirected back to main page 
+        # You can only ever get not allowed if you changed some html locally in an unintended way
+        if comment.username == current_user.username: 
+            pass
+        else:
+            return redirect('/')
+        return render_template('editComment.html', form = form, post = post, comment = comment)
+    else:
+        edit_time = time.time()
+        # Loads current title and content
+        comment.content = json.dumps(form.comment.data.split('\r\n'))
+        comment.edit_time = edit_time
+        db.session.commit()
+        return redirect(f'/view/{post_id}')
+
 @app.route("/logout")
 @login_required
 def logout():
@@ -251,6 +309,10 @@ def remove(post_id, comment_id = None):
         if current_user.username == post.username or current_user.username == comment.username:
             for reaction in reactions: # Deletes all reactions to the comment
                 db.session.delete(reaction)
+
+            child_comments = Comment.query.filter_by(parent_id = comment_id).all() # Get all replies to the comment
+            for child_comment in child_comments: # Deletes all replies to the comment
+                remove(post_id, child_comment.id) # Recursively delete replies
 
             db.session.delete(comment)
             db.session.commit()
@@ -280,4 +342,3 @@ def remove(post_id, comment_id = None):
         return redirect('/posts')
     
     return redirect('/') # If you are not the owner of the post or comment you will be redirected to start page
-

@@ -6,7 +6,8 @@
     
     {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
     <input name="title" id="title" class="center" type="text" placeholder="Title" autofocus autocomplete="off">
-    <input name="post_content" id="post" class="center" type="text" placeholder="Write your message" autocomplete="off">
+    <p class="center" style="margin-bottom:-0.5rem;">Write your message</p>
+    <textarea name="post_content" id="post" type="text" autocomplete="off"></textarea>
     <input type="file" name="images" multiple>
     <p style="color: red;">{{ error }}</p>
     <button type="submit" class="btn btn-primary">Submit</button>

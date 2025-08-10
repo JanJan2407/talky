@@ -1,0 +1,17 @@
+{% extends "template.html" %}
+{% block title %}Edit a post{% endblock %}
+
+{% block body %}
+<form action="/edit_post/{{ post.id }}" method="post" enctype="multipart/form-data"><!-- enctype is necessary for posting images-->
+    
+    {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
+    <input name="title" id="title" class="center" type="text" placeholder="Title" autocomplete="off" value="{{ post.title }}">
+    <p class="center" style="margin-bottom:-0.5rem;">Write your message</p>
+    <textarea name="post_content" id="post" type="text" autocomplete="off">{% for line in load(post.post_content) %}{{ line }} {# This weird indentation is required because of textbox weird mechanics #}
+{% endfor %}</textarea>
+    <input type="file" name="images" multiple>
+    <p style="color: red;">{{ error }}</p>
+    <p style="color: red;">Removing images from posts currently not possible !</p>
+    <button type="submit" class="btn btn-primary">Edit</button>
+</form>
+{% endblock %}

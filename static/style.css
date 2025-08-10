@@ -53,6 +53,7 @@ top: 13px;
     display: grid;
     gap: 2.5%;
     grid-template-columns: 1fr 1fr 1fr;
+    margin: 0.5%;
 }
 
 .flex_container{
