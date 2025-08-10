@@ -37,23 +37,32 @@
 
 {# Main template for displaying posts in a grid format #}
 {% macro display_post(posts, current_user, post_reactions, get_date, moment) %}
-    {% for post in posts %} {# Display posts -> they are arranged in grid of 2 per column #}
-        <a href="/view/{{ post.id }}" class="btn a_tag"> {# Every post is surrounded by an a tag that links to more detailed post where comments are placed as well#}
+    {% for post in posts %} {# Display posts -> they are arranged in grid of 3 per column #}
             <div class = "card flex_container">
                 <section>
-                    {% if post.is_image %} {# Display image if it was provided  #}
-                    <section class="card-img-top" style="background-color: coral;">
-                        <img style="height: 50vh;"src="{{ url_for('get_image', filename='postimage_' ~ post.id ~ '.jpg') }}">
-                    </section>
-                    {% endif %}
-                    <section class="card-body" style="height: 20vh; overflow-y: auto;"> {# Too long posts will be made scrollable #}
-                        <h3 class="card-title post_title">{{ post.title }}</h3>
-                        <p class="card-text">{{ post.post_content }}</p>
-                    </section>
-                    <section> 
-                        {# For time I use flask-moment and a python function get_date() from helpers #}
-                        <p class="card-footer post_author center">{{ post.username }}</p>
-                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ post_reactions[post.id]['like_count'] }} Dislikes: {{ post_reactions[post.id]['dislike_count'] }}, {{ post.is_image }}</p> {# Post_reactions is a dict of all reactions to all posts  #}
+                    {% for image_index in range(post.image_count) %}
+                    {# each image gets it's own id based on their parent post and their id in that specific post#}
+                        <section id="image{{image_index}}_{{ post.id }}" class="img_posts" style="background-image:url({{ url_for('get_image', filename = image_index ~ 'postimage_' ~ post.id ~ '.jpg') }});" {% if loop.first %} visible {% else %} hidden {% endif %}>
+                        {% if not loop.first %} {# _image_index+1_ and -1 are index to which image has to become visible when this button is pressed that's why images also have ids with their index #}
+                            <button onclick="switchImage({{ image_index }}, {{ image_index - 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-right:auto;"><-</button>
+                        {% endif %} 
+                        {% if not loop.last %}
+                            <button onclick="switchImage({{ image_index }}, {{ image_index + 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-left:auto;">-></button>
+                        {% endif %}
+                        </section>
+                    {% endfor %}
+                    <a href="/view/{{ post.id }}" class="btn a_tag"> {# if this a tag is clicked you get to the full post page #}
+                        <section class="card-body" style="height: 20vh; overflow-y: auto;"> {# Too long posts will be made scrollable #}
+                            <h3 class="card-title post_title">{{ post.title }}</h3>
+                            <p class="card-text">{{ post.post_content }}</p>
+                        </section>
+                        <section> 
+                            {# For time I use flask-moment and a python function get_date() from helpers #}
+                            <p class="card-footer post_author center">{{ post.username }}</p>
+                            <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ post_reactions[post.id]['like_count'] }} Dislikes: {{ post_reactions[post.id]['dislike_count'] }}, {{ post.is_image }}</p> {# Post_reactions is a dict of all reactions to all posts  #}
+                        </section>
+                    </a>
+                    <section class="center">
                         {% if current_user.username == post.username %}
                         <form method="post" action="/remove/{{ post.id }}">
                             <button type="submit">Remove</button>
@@ -66,6 +75,5 @@
                     </section>
                 </section>
             </div>
-        </a>
     {% endfor %}
 {% endmacro %}

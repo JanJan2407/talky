@@ -17,7 +17,7 @@ class Post(db.Model):
     id: Mapped[int] = mapped_column(primary_key = True)
     username: Mapped[str]
     title: Mapped[str]
-    is_image: Mapped[bool] = mapped_column(default = False)# Link to image stored in a separate folder
+    image_count: Mapped[int] = mapped_column(default = 0) # Images stored in a separate folder
     post_content: Mapped[str]
     time: Mapped[int] # Time since epoch 1st of January 1970 in UTC timezone, gets converted to actual time with users timezone
 

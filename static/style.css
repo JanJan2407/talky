@@ -48,23 +48,43 @@ top: 13px;
     margin: 5%;
     margin-bottom: 0;
 }
-/* Creates a grid with 2 equally big columns and makes it so that all rows are equally big*/
+/* Creates a grid with 3 equally big columns and makes it so that all rows are equally big*/
 .grid_container{ 
     display: grid;
     gap: 2.5%;
-    grid-template-columns: 1fr 1fr;
-    grid-auto-rows: 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
 }
-/* All posts are take 100% of available height and are itself flex boxes to order insides+ */
+
 .flex_container{
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: flex-end;
     gap: 5%;
     align-items: center;
 }
-/* All posts are wrapped inside an a tag */
+/* All post content is wrapped in an a tag (not an image but text) */
 .a_tag{
     text-decoration: none;
+}
+
+.img_posts{
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-size: cover; /* Resize the background image to cover the entire container */
+    height: 50vh;
+    display: flex;
+}
+
+.img_posts button{
+    height: fit-content;
+    margin: auto 0px; /* Centers button for next correctly along y axis*/
+}
+
+/* Centers button for next correctly along x axis*/
+.img_posts_next{
+    justify-content: flex-end;
+}
+
+.img_posts_back{
+    justify-content: flex-start;
 }

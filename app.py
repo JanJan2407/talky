@@ -133,7 +133,7 @@ def view(id):
             'disliked_by': dislikes
         }
 
-    return render_template('view.html', post = post, form = form, comments = comments, comment_reactions = comment_reactions)
+    return render_template('view.html.jinja', post = post, form = form, comments = comments, comment_reactions = comment_reactions)
 
 @app.route('/images/<filename>') # Allows me to access images in folder instance (folder is created on run if it doesn't exist)
 def get_image(filename):
@@ -211,18 +211,24 @@ def post(): # Allow users to post messages for everyone
         db.session.add(post)
         db.session.commit()
 
-        file = form.image.data # Optional image of form
-        if file:
-            filename = secure_filename(file.filename)
-            if allowed_file(filename): # Checks if file has a valid suffix
-                print('here')
-                img = Image.open(file) # Open img with Python image library
-                jpg_img = img.convert('RGB') # Convert opened image to jpg because it is much smaller
-                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
-                post.is_image = True # Tells db that img was provided
-                db.session.commit() # Second commit is needed to save potential new img
-            else:
-                return render_template("post.html", form = form, error='Only .jpg, .png or .jpeg are allowed')
+        files = form.images.data # Optional image of form
+        if files: # If 0 logical statement results in false otherwise it is true
+            jpg_images =  []
+            for file in files:
+                if allowed_file(secure_filename(file.filename)): # Checks if file has a valid suffix
+                    img = Image.open(file) # Open img with Python image library
+                    jpg_images.append(img.convert('RGB'))  # Convert opened image to jpg because it is much smaller
+                else:
+                    db.session.remove(post) # Removes previously uploaded post because user may have provided wrong input
+                    db.session.commit()
+                    return render_template("post.html", form = form, error='Only .jpg, .png, .jpeg, .gif and .webp are allowed. Post was not uploaded')
+                
+            post.image_count = len(jpg_images)
+            for i, jpg_img in enumerate(jpg_images): # i will be a sign of how many images this post have 
+                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], str(i) + 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
+
+            db.session.commit()
+        return redirect('/posts')
 
     return render_template("post.html", form = form)
 
@@ -263,9 +269,9 @@ def remove(post_id, comment_id = None):
         for reaction in reactions: # Deletes all reactions to the post itself
             db.session.delete(reaction)
 
-        if post.is_image: # If post has an image the image will be deleted as well
+        for i in range(post.image_count): # If post has images they will be deleted as well
             try:
-                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], 'postimage_' + str(post.id) + '.jpg')) # Deletes the image from the folder
+                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{i}postimage_' + str(post.id) + '.jpg')) # Deletes the image from the folder
             except Exception:
                 pass
 

@@ -25,7 +25,7 @@ function searchPost() // Used to search posts by title and by person who posted 
     const inputTitle = document.getElementById('search_title').value; 
     const inputAuthor = document.getElementById('search_author').value;
     const post_list = document.getElementById("posts");
-    const posts = post_list.getElementsByTagName('a'); // Get all posts
+    const posts = post_list.getElementsByClassName('card'); // Get all posts
     // Because data for title and author is not same (obviously) we have 2 get 2 arrays of elements we will compare to
     const elementsTitle = post_list.getElementsByClassName('post_title');
     const elementsAuthor = post_list.getElementsByClassName('post_author');
@@ -41,4 +41,9 @@ function searchPost() // Used to search posts by title and by person who posted 
             posts[i].style.display = "none"; // Hides it
         }
     }
+}
+
+function switchImage(currentIndex, targetedIndex, postId){ // Used to switch between images on posts if a post have more than one
+    document.getElementById(`image${currentIndex}_${postId}`).hidden = true;
+    document.getElementById(`image${targetedIndex}_${postId}`).hidden = false;
 }
