@@ -25,7 +25,7 @@
                 <li class="nav-item"><a class="nav-link" href="/posts"><i class="bi bi-images"></i> View posts</a></li>
             </ul>
             <ul class="navbar-nav">
-                {% if not current_user.username %} {# If you are not logged in you see this if you are you just see your username #}
+                {% if not current_user.is_authenticated %} {# If you are not logged in you see this if you are you just see your username #}
                     <li class="nav-item"><a class="nav-link" href="/register"><i class="bi bi-person"></i> Sign Up</a></li>
                     <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
                 {% else %}
