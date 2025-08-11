@@ -1,3 +1,6 @@
+body{
+    padding-top: 60px;     /* So that navbar does not cover content */
+}
 .gradient-custom {
     
 /* fallback for old browsers */

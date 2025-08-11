@@ -4,13 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <!--First link is normal bootstrap and second one are images that come pre build with it-->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="/static/style.css" type="text/css" rel="stylesheet">
     <title>{% block title %}{% endblock %}</title>
     {{ moment.include_moment() }} <!-- Configures flask moment to work-->
 </head>
 <body>
-
+     <nav class="navbar navbar-expand-lg bg-dark fixed-top" data-bs-theme="dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/" style="font-weight: bold; color: #5BA3F3; margin-right:3%;"><img src="/static/images/favicon.svg" width="50%"> Talky</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto gap-2">
+                <li class="nav-item active"><a class="nav-link" href="/users"><i class="bi bi-people-fill"></i> Search users</a></li>
+                <li class="nav-item"><a class="nav-link" href="/post"><i class="bi bi-plus-circle"></i> Post</a></li>
+                <li class="nav-item"><a class="nav-link" href="/posts"><i class="bi bi-images"></i> View posts</a></li>
+            </ul>
+            <ul class="navbar-nav">
+                {% if not current_user.username %} {# If you are not logged in you see this if you are you just see your username #}
+                    <li class="nav-item"><a class="nav-link" href="/register"><i class="bi bi-person"></i> Sign Up</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-box-arrow-in-right"></i> Login</a></li>
+                {% else %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle a_tag" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="/logout"><i class="bi bi-person-fill-x"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                {% endif %}
+            </ul>
+            </div>
+        </div>
+    </nav>
     {% block body %}{% endblock %}
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js" integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q" crossorigin="anonymous"></script>
