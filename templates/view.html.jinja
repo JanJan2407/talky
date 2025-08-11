@@ -8,7 +8,7 @@
             <h3>{{ post.title }}</h3>
             {% for image_index in range(post.image_count) %}
                 {# each image gets it's own id based on their parent post and their id in that specific post#} 
-                <section id="image{{image_index}}_{{ post.id }}" class="img_posts" style="background-image:url({{ url_for('get_image', filename = image_index ~ 'postimage_' ~ post.id ~ '.jpg') }}); background-size: auto 100%; {# makes an image scale correctly #}" {% if loop.first %} visible {% else %} hidden {% endif %}>
+                <section id="image{{image_index}}_{{ post.id }}" class="img_posts img_view" style="background-image:url({{ url_for('get_image', filename = image_index ~ 'postimage_' ~ post.id ~ '.jpg') }}); background-size: auto 100%; {# makes an image scale correctly #}" {% if loop.first %} visible {% else %} hidden {% endif %}>
                 {% if not loop.first %} {# _image_index + 1 and -1 are index to which image has to become visible when this button is pressed that's why images also have ids with their index #}
                     <button onclick="switchImage({{ image_index }}, {{ image_index - 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-right:auto;"><-</button>
                 {% endif %} 

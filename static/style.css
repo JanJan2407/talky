@@ -58,6 +58,19 @@ top: 13px;
     grid-template-columns: 1fr 1fr 1fr;
     margin: 0.5%;
 }
+/* If screen is medium width (tablet) create only 2 posts per row for better visibility */
+@media only screen and (max-width: 1280px) {
+   .grid_container{
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* If screen is small (phone) create only 1 post per row for better visibility */
+@media only screen and (max-width: 640px) {
+   .grid_container{
+        grid-template-columns: 1fr;
+    }
+}
 
 .flex_container{
     display: flex;
@@ -91,4 +104,34 @@ top: 13px;
 
 .img_posts_back{
     justify-content: flex-start;
+}
+
+.img_view{
+    float: right;
+    width: 40%;
+}
+
+/* Adjust the size of an image based on screen size for better visibility */
+@media only screen and (max-width: 1800px) {
+   .img_view{
+        width: 50%;
+    }
+}
+
+@media only screen and (max-width: 1500px) {
+   .img_view{
+        width: 60%;
+    }
+}
+
+@media only screen and (max-width: 1200px) {
+   .img_view{
+        width: 70%;
+    }
+}
+
+@media only screen and (max-width: 900px) {
+   .img_view{
+        width: 100%;
+    }
 }
