@@ -5,7 +5,7 @@
     <div class="gradient-custom vh-100">
     <h2 class="center">User list</h2>
 
-    <input type="text" class="search" onkeyup="searchUser()" placeholder="Search for username" class="center"> <!--Input field for searching users-->
+    <input type="text" class="search center" onkeyup="searchUser()" placeholder="Search for username" id="search_name"> <!--Input field for searching users-->
 
     <ul class="center no-list-style" id="userlist"> <!-- Display users that match search input -->
         {% for user in users %}
