@@ -47,3 +47,10 @@ function switchImage(currentIndex, targetedIndex, postId){ // Used to switch bet
     document.getElementById(`image${currentIndex}_${postId}`).hidden = true;
     document.getElementById(`image${targetedIndex}_${postId}`).hidden = false;
 }
+
+function react(type, id, action){
+    // Type will declare what is being reacted to either a comment or a post
+    // Id is simply id of a post or a comment
+    // Action is either like or dislike
+    
+}

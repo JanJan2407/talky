@@ -8,7 +8,7 @@
 
         {# Owner, time of post, reactions #}
         <p>{{ comment.username }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }}
-        Likes: {{ comment_reactions[comment.id]['like_count'] }} Dislikes: {{ comment_reactions[comment.id]['dislike_count'] }}</p>
+        Likes: <span id="comment{{ comment.id }}likes">{{ comment_reactions[comment.id]['like_count'] }}</span> Dislikes: <span id="comment{{ comment.id }}dislikes">{{ comment_reactions[comment.id]['dislike_count'] }}</span></p>
         {% if comment.edit_time != 0 %}
         <p>Edited on: {{ moment(get_date(comment.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
         {% endif %}
@@ -82,7 +82,7 @@
                     <section> 
                         {# For time I use flask-moment and a python function get_date() from helpers #}
                         <p class="card-footer post_author center">{{ post.username }}</p>
-                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: {{ post_reactions[post.id]['like_count'] }} Dislikes: {{ post_reactions[post.id]['dislike_count'] }}, {{ post.is_image }}</p> {# Post_reactions is a dict of all reactions to all posts  #}
+                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: <span id="post{{ post.id }}likes">{{ post_reactions[post.id]['like_count'] }}</span> Dislikes: <span id="post{{ post.id }}dislikes">{{ post_reactions[post.id]['dislike_count'] }}</span></p> {# Post_reactions is a dict of all reactions to all posts  #}
                         {% if post.edit_time != 0%}  {# If post was ever edited #}
                             <p class="card-footer center">Last edited on: {{ moment(get_date(post.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
                         {% endif %}
