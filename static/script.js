@@ -48,9 +48,56 @@ function switchImage(currentIndex, targetedIndex, postId){ // Used to switch bet
     document.getElementById(`image${targetedIndex}_${postId}`).hidden = false;
 }
 
-function react(type, id, action){
-    // Type will declare what is being reacted to either a comment or a post
-    // Id is simply id of a post or a comment
+function react(action, username, post_id, comment_id = null){
     // Action is either like or dislike
-    
+    // Username is a person who reacted 
+    if (username === '') // If user not logged in
+    {
+        alert('Please log in to do that');
+        return
+    }
+    let link; // Used to only need 1 link no metter if comment is reacted to or post
+    let id; // Main id used later for coloring button
+    if(comment_id !== null){ // If comment exists
+        link = `/react/${post_id}/${comment_id}`;
+        id = comment_id;
+    }else{ // If post
+        link = `react/${post_id}`;
+        id = post_id;
+    }
+    // update is a js promise that posts to link with JSON type data
+    const update = fetch(link,
+    {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json; charset=utf-8'},
+        body: JSON.stringify
+        ({
+            action: action,
+            username: username        
+        })
+    }
+    )
+    update.then(response => response.json()) // response.json returns yet another promise
+    .then(data => // 
+    {
+        document.getElementById(`likes${id}`).innerText = data.like_count; // Id of selected element either a post or a comment gets a correct amount of likes and dislikes
+        document.getElementById(`dislikes${id}`).innerText = data.dislike_count;
+        // Corectly colours button depending on if user has likes a post/comment or not
+        if (data.liked_by.includes(username)) 
+        {
+            document.getElementById(`like_${id}`).classList.add('btn-dark');
+            document.getElementById(`dislike_${id}`).classList.remove('btn-dark');
+        }
+        else if(data.disliked_by.includes(username))
+        {
+            document.getElementById(`like_${id}`).classList.remove('btn-dark');
+            document.getElementById(`dislike_${id}`).classList.add('btn-dark');
+        }
+        else
+        {  
+            document.getElementById(`like_${id}`).classList.remove('btn-dark');
+            document.getElementById(`dislike_${id}`).classList.remove('btn-dark');
+        }
+    }
+    )
 }

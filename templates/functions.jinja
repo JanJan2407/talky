@@ -8,7 +8,7 @@
 
         {# Owner, time of post, reactions #}
         <p>{{ comment.username }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }}
-        Likes: <span id="comment{{ comment.id }}likes">{{ comment_reactions[comment.id]['like_count'] }}</span> Dislikes: <span id="comment{{ comment.id }}dislikes">{{ comment_reactions[comment.id]['dislike_count'] }}</span></p>
+        Likes: <span id="likes{{ comment.id }}">{{ comment_reactions[comment.id]['like_count'] }}</span> Dislikes: <span id="dislikes{{ comment.id }}">{{ comment_reactions[comment.id]['dislike_count'] }}</span></p>
         {% if comment.edit_time != 0 %}
         <p>Edited on: {{ moment(get_date(comment.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
         {% endif %}
@@ -19,10 +19,8 @@
         {% endfor %}
 
         {# Like/dislike #}
-        <form action="/react/{{ post.id }}//{{ comment.id }} " style="display: inline;" method="post">
-            <button class="btn {% if current_user.username in comment_reactions[comment.id]['liked_by'] %} btn-dark {% endif %}" class="like" name="reaction" type="submit" value="like">Like</button>
-            <button class="btn {% if current_user.username in comment_reactions[comment.id]['disliked_by'] %} btn-dark {% endif %}" class**="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
-        </form>
+        <button class="btn {% if current_user.username in comment_reactions[comment.id]['liked_by'] %} btn-dark {% endif %}" id="like_{{ comment.id }}" name="reaction" value="like" onclick="react('like', '{{ current_user.username }}', {{ post.id }}, {{ comment.id }})">Like</button>
+        <button class="btn {% if current_user.username in comment_reactions[comment.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike_{{ comment.id }}" name="reaction" value="dislike" onclick="react('dislike', '{{ current_user.username }}', {{ post.id }}, {{ comment.id }})">Dislike</button>
 
         {# Add a reply #}
         <form method="post" action="/view/post/{{ post.id }}/{{ comment.id }}" style="display: inline;"> 
@@ -82,7 +80,7 @@
                     <section> 
                         {# For time I use flask-moment and a python function get_date() from helpers #}
                         <p class="card-footer post_author center">{{ post.username }}</p>
-                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: <span id="post{{ post.id }}likes">{{ post_reactions[post.id]['like_count'] }}</span> Dislikes: <span id="post{{ post.id }}dislikes">{{ post_reactions[post.id]['dislike_count'] }}</span></p> {# Post_reactions is a dict of all reactions to all posts  #}
+                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: <span id="likes{{ post.id }}">{{ post_reactions[post.id]['like_count'] }}</span> Dislikes: <span id="dislikes{{ post.id }}">{{ post_reactions[post.id]['dislike_count'] }}</span></p> {# Post_reactions is a dict of all reactions to all posts  #}
                         {% if post.edit_time != 0%}  {# If post was ever edited #}
                             <p class="card-footer center">Last edited on: {{ moment(get_date(post.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
                         {% endif %}
@@ -99,10 +97,9 @@
                         <button type="submit" class="btn" style="display: inline-block;">Remove</button>
                     </form>
                     {% endif %}
-                    <form action="/react/{{ post.id }}" method="post"> {# Form to like/dislike selected button is in color black other one is white #}
-                        <button class="btn {% if current_user.username in post_reactions[post.id]['liked_by'] %} btn-dark {% endif %}" class="like" name="reaction" type="submit" value="like">Like</button>
-                        <button class="btn {% if current_user.username in post_reactions[post.id]['disliked_by'] %} btn-dark {% endif %}" class="dislike" name="reaction" type="submit" value="dislike">Dislike</button>
-                    </form>
+                    {# Buttons to react to posts#}
+                    <button class="btn {% if current_user.username in post_reactions[post.id]['liked_by'] %} btn-dark {% endif %}" id="like_{{ post.id }}" name="reaction" onclick="react('like', '{{ current_user.username }}', {{ post.id }})" value="like">Like</button>
+                    <button class="btn {% if current_user.username in post_reactions[post.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike_{{ post.id }}" name="reaction" onclick="react('dislike', '{{ current_user.username }}', {{ post.id }})" value="dislike">Dislike</button>
                 </section>
             </div>
     {% endfor %}

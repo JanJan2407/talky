@@ -3,14 +3,14 @@ import time
 import os
 import json 
 
-from flask import render_template, request, redirect, url_for, send_from_directory
+from flask import render_template, request, redirect, url_for, send_from_directory, jsonify
 from flask_login import login_user, login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 from PIL import Image
 from resources import app, db, login_manager
 from forms import LoginForm, RegistrationForm, PostForm, CommentForm
 from models import User, Post, Comment, Like
-from helpers import valid_error, allowed_file
+from helpers import valid_error, allowed_file, get_reactions
 
 # Loads the user if logged in
 @login_manager.user_loader
@@ -98,42 +98,26 @@ def user_list():
 @app.route('/posts') # Display all posts
 def show_posts():
     posts = Post.query.all()
-    reactions = Like.query.filter_by(comment_id = None).all()  # Only post reactions
 
     # Build a dict: {post_id: {'likes': count, 'dislikes': count, 'liked_by': [...], 'disliked_by': [...]}}
     post_reactions = {}
+    # All reactions to all posts
     for post in posts:
-        likes = [r.username for r in reactions if r.post_id == post.id and r.is_like] # Get usernames of users who liked the post
-        dislikes = [r.username for r in reactions if r.post_id == post.id and not r.is_like] # Get usernames of users who disliked the post
-        post_reactions[post.id] = {
-            'like_count': len(likes),
-            'dislike_count': len(dislikes),
-            'liked_by': likes,
-            'disliked_by': dislikes
-        }
+        post_reactions[post.id] = get_reactions(post_id = post.id)
 
-    return render_template('posts.html', posts=posts, post_reactions=post_reactions)
+    return render_template('posts.html', posts = posts, post_reactions = post_reactions)
 
 @app.route('/view/<id>', methods = ['GET']) # Show specific post on whole page also displays any comments on the post
 def view(id):
     form = CommentForm()
     post = Post.query.filter_by(id = id).first()
     comments = Comment.query.filter_by(post_id = id).all()
-    comment_ids = [c.id for c in comments]
-    reactions = Like.query.filter(Like.comment_id.in_(comment_ids)).all()  # Only reactions to comments
-
     # Build a dict: {comment_id: {'like_count': ..., 'dislike_count': ..., 'liked_by': [...], 'disliked_by': [...]}}
     comment_reactions = {}
+    # All reactions for all comments of that specific post
     for comment in comments:
-        likes = [r.username for r in reactions if r.comment_id == comment.id and r.is_like]
-        dislikes = [r.username for r in reactions if r.comment_id == comment.id and not r.is_like]
-        comment_reactions[comment.id] = {
-            'like_count': len(likes),
-            'dislike_count': len(dislikes),
-            'liked_by': likes,
-            'disliked_by': dislikes
-        }
-
+        comment_reactions[comment.id] = get_reactions(comment_id = comment.id)
+    
     return render_template('view.html.jinja', post = post, form = form, comments = comments, comment_reactions = comment_reactions)
 
 @app.route('/images/<filename>') # Allows me to access images in folder instance (folder is created on run if it doesn't exist)
@@ -164,29 +148,31 @@ def add_comment(post_id, comment_id = None):
 @app.route("/react/<int:post_id>/<int:comment_id>", methods = ['POST']) # React to a comment 
 @login_required # Login users can like/dislike
 def like_dislike(post_id, comment_id = None):
-    reaction = request.form.get('reaction') # Like or dislike string
-    username = current_user.username
-    if not comment_id: # If post will be liked
-        react = Like.query.filter_by(post_id = post_id, username = username, comment_id = None).first() # Selects the post that will be reacted to
-    else:
-        react = Like.query.filter_by(post_id = post_id, username = username, comment_id = comment_id).first() # Selects the comment that will be reacted to
+    data = request.get_json() # Gets info submitted from js fetch function
+    action = data['action'] # like or dislike
+    username = data['username'] # Of current user
+    react = Like.query.filter_by(post_id = post_id if not comment_id else None, username = username, comment_id = comment_id).first() # Looks if username has already reacted to specific post/comment before
     
     if not react: # If user has not reacted to the post/comment yet
         react = Like(
-            post_id = post_id,
-            comment_id = comment_id,
+            post_id = post_id if not comment_id else None, # If a reaction is for a comment post id is not stored 
+            comment_id = comment_id, # If comment id not provided this will automaticly be None
             username = username,
-            is_like = reaction == 'like' # True if like, False if dislike
+            is_like = action == 'like' # True if like, False if dislike
         )
         db.session.add(react)
-    else: # If user has already reacted to the post/comment
-        react.is_like = reaction == 'like' # Updates the reaction to like or dislike
 
+    elif react.is_like and action == 'like' or not react.is_like and action == 'dislike': # If user has already reacted to the post/comment with same reaction as now
+        db.session.delete(react) # Delets a reaction
+    else:
+        react.is_like = not react.is_like # This only gets run if user clicked like and has disliked before or clicked dislike and has liked before
+        
     db.session.commit() # Saves the change to db
+
     if not comment_id: # If post was liked/disliked
-        return redirect('/posts') 
+        return jsonify(get_reactions(post_id = post_id)) # jsonify from Flask is used because browsers can't receive dicts directly - it needs to be as JSON
     else: # If comment was liked/disliked
-        return redirect(f'/view/{post_id}')
+        return jsonify(get_reactions(comment_id = comment_id))
 
 @app.route('/home')
 @login_required
@@ -322,19 +308,19 @@ def remove(post_id, comment_id = None):
     elif current_user.username == post.username: # Post will be deleted
         comments = Comment.query.filter_by(post_id = post_id).all()
         for comment in comments: # Deletes all comments on the post
-            reactions = Like.query.filter_by(post_id = post_id, comment_id = comment.id).all()
+            reactions = Like.query.filter_by(comment_id = comment.id).all()
             for reaction in reactions: # Deletes all reactions to the comment
                 db.session.delete(reaction)
             db.session.delete(comment)
 
-        reactions = Like.query.filter_by(post_id = post_id, comment_id = None).all()
+        reactions = Like.query.filter_by(post_id = post_id, comment_id = None).all() # Reactions to the post 
         for reaction in reactions: # Deletes all reactions to the post itself
             db.session.delete(reaction)
 
         for i in range(post.image_count): # If post has images they will be deleted as well
             try:
                 os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{i}postimage_' + str(post.id) + '.jpg')) # Deletes the image from the folder
-            except Exception:
+            except Exception: # If something went wrong
                 pass
 
         db.session.delete(post)

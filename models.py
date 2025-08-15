@@ -35,7 +35,7 @@ class Comment(db.Model):
 
 class Like(db.Model):
     id: Mapped[int] = mapped_column(primary_key = True)
-    post_id: Mapped[int]
+    post_id: Mapped[int] =  mapped_column(nullable = True, default = None)  # None for comment, set for post
     comment_id: Mapped[int] = mapped_column(nullable = True, default = None)  # None for post, set for comment
     username: Mapped[str]
     is_like: Mapped[bool]  # True for like, False for dislike
