@@ -56,7 +56,7 @@ function react(action, username, post_id, comment_id = null){
         alert('Please log in to do that');
         return
     }
-    let link; // Used to only need 1 link no metter if comment is reacted to or post
+    let link; // Used to only need 1 link no matter if comment is reacted to or post
     let id; // Main id used later for coloring button
     if(comment_id !== null){ // If comment exists
         link = `/react/${post_id}/${comment_id}`;

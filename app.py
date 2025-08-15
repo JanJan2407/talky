@@ -68,7 +68,7 @@ def login():
         # Validates if form was submitted correctly 
         if form.validate_on_submit():
             # If username provided and password provided match with data in db
-            # Password in db is stored as has hso when we compare we convert to hash as well
+            # Password in db is stored as hash so when we compare we convert to hash as well
             user = User.query.filter_by(username = form.username.data).first()
             if not user:
                 return render_template('login.html', form = form, error_msg = 'Username does not exist')
@@ -137,7 +137,7 @@ def add_comment(post_id, comment_id = None):
             post_id = post_id,
             username = username,
             content = comment_content,
-            time = comment_time, # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
+            time = comment_time, # In db value stored is not date yet it gets converted to users local time with Jinja when page is loaded
             parent_id = comment_id# If comment_id is provided it means that this comment is a reply to another comment else it is a top-level comment with parent_id set to None 
         )
     db.session.add(comment) # Adds comment to db
@@ -156,7 +156,7 @@ def like_dislike(post_id, comment_id = None):
     if not react: # If user has not reacted to the post/comment yet
         react = Like(
             post_id = post_id if not comment_id else None, # If a reaction is for a comment post id is not stored 
-            comment_id = comment_id, # If comment id not provided this will automaticly be None
+            comment_id = comment_id, # If comment id not provided this will automatically be None
             username = username,
             is_like = action == 'like' # True if like, False if dislike
         )
@@ -192,7 +192,7 @@ def post(): # Allow users to post messages for everyone
             username = username,
             title = title,
             post_content = json.dumps(post_content), # Creates a JSON list of all lines to be displayed
-            time = current_time # In db value stored is not date yet it gets converted to users local time with jinja when page is loaded
+            time = current_time # In db value stored is not date yet it gets converted to users local time with Jinja when page is loaded
         )
         db.session.add(post)
         db.session.commit()
