@@ -7,8 +7,7 @@
     {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
     <input name="title" id="title" class="center" type="text" placeholder="Title" autocomplete="off" value="{{ post.title }}">
     <p class="center" style="margin-bottom:-0.5rem;">Write your message</p>
-    <textarea name="post_content" id="post" type="text" autocomplete="off">{% for line in load(post.post_content) %}{{ line }} {# This weird indentation is required because of textbox weird mechanics #}
-{% endfor %}</textarea>
+    <textarea name="post_content" id="post" type="text" autocomplete="off" class="preserve">{{ load(post.post_content) }}</textarea> {# This weird indentation is required because of textbox weird mechanics #}
     <input type="file" name="images" multiple>
     <p style="color: red;">{{ error }}</p>
     <p style="color: red;">Removing images from posts currently not possible !</p>

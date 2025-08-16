@@ -17,21 +17,17 @@
                 {% endif %}
                 </section>
             {% endfor %}
-            {% for line in load(post.post_content) %} {# List has to be loaded because it was stored in JSON -- used to display text exactly as it was given #}
-                <p class="card-text">{{ line }}</p>
-            {% endfor %}
+            <div class="card-text preserve">{{ load(post.post_content) }}</div>
         </section>
         <section>
             <p class="card-footer">Author: {{ post.username }}, Posted on: {{ moment(get_date(post.time)).format('h:mm:ss a') }}</p>
         </section>
     </section>
-    <form method="post" action="/view/post/{{ post.id }}"> <!-- Form that allows to add comment if user is logged in -->
-        <textarea name="comment" style="display: inline-block;" placeholder="Add a comment"></textarea>
-        <button type="submit" style="display: inline-block;">Add</button>
-    </form>
+    <textarea name="comment" style="display: inline-block;" placeholder="Add a comment" id="commentContent_0"></textarea> <!--Id 0 helps to add replies with js -->
+    <button onclick="addComment({{ post.id }}, 0, 0)" style="display: inline-block;" id="add_0">Add</button>
     <hr>
-    <section> <!-- Display comments -->
-        {% for comment in comments if comment.parent_id is none %}
+    <section id="placeholder_0"> <!-- Display comments --> {# A new comment with js is added to the end of this section #}
+        {% for comment in comments if comment.parent_id == 0 %}
             {{ render_comment(comment, comment_reactions, post, current_user, get_date, moment) }} <!-- Render comment using a macro -->
         {% endfor %}
     </section>

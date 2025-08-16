@@ -124,33 +124,31 @@ def view(id):
 def get_image(filename):
     return send_from_directory(app.config['POST_UPLOAD_FOLDER'], filename)
 
-@app.route('/view/post/<post_id>', methods = ['POST']) # Allows users to add comments to posts
-@app.route('/view/post/<post_id>/<comment_id>', methods = ['POST']) # Allows users to add replies to existing comments
-@login_required # Logged in users can add comments to posts
-def add_comment(post_id, comment_id = None): 
+@app.route('/view/post/<post_id>/<comment_id>', methods = ['POST']) # Allows users to add replies to existing comments or posts (comment_id == 0)
+@login_required # Logged in users can add comments
+def add_comment(post_id, comment_id): 
+    data = request.get_json() # List of messages each line its own list element
     comment_time = int(time.time())
-    form = CommentForm()
-    comment_content = json.dumps(form.comment.data.split('\r\n')) # Split on new line and convert list to JSON
+    comment_content = json.dumps(data) # List of messages converted back to JSON
     username = current_user.username
-    print(comment_id)
-    comment = Comment(
+    comment = Comment( # Create a new comment
             post_id = post_id,
             username = username,
             content = comment_content,
             time = comment_time, # In db value stored is not date yet it gets converted to users local time with Jinja when page is loaded
-            parent_id = comment_id# If comment_id is provided it means that this comment is a reply to another comment else it is a top-level comment with parent_id set to None 
-        )
+            parent_id = comment_id # If comment_id is 0 parent is post
+    )
     db.session.add(comment) # Adds comment to db
     db.session.commit()
-    return redirect(f'/view/{post_id}') # Redirects to the post that was commented on
+
+    return jsonify({'id': comment.id, 'username': f'{username}'}) # Returns id of newly created comment and it's owner to JS for dynamic rendering
 
 @app.route("/react/<int:post_id>", methods = ['POST']) # React to a post
 @app.route("/react/<int:post_id>/<int:comment_id>", methods = ['POST']) # React to a comment 
 @login_required # Login users can like/dislike
 def like_dislike(post_id, comment_id = None):
-    data = request.get_json() # Gets info submitted from js fetch function
-    action = data['action'] # like or dislike
-    username = data['username'] # Of current user
+    action = request.get_json() # Gets info submitted from js fetch function which is either like or dislike
+    username = current_user.username
     react = Like.query.filter_by(post_id = post_id if not comment_id else None, username = username, comment_id = comment_id).first() # Looks if username has already reacted to specific post/comment before
     
     if not react: # If user has not reacted to the post/comment yet
@@ -187,7 +185,7 @@ def post(): # Allow users to post messages for everyone
         current_time = int(time.time()) # In seconds since epoch (Jan 1st 1970 UTC)
         username = current_user.username
         title = form.title.data
-        post_content = form.post_content.data.split('\r\n') # Body of form \r\n is used for new line in text so this makes store each paragraph and each line separately
+        post_content = form.post_content.data
         post = Post(
             username = username,
             title = title,
@@ -235,7 +233,7 @@ def edit_post(post_id):
         edit_time = time.time()
         # Loads current title and content
         post.title = form.title.data 
-        post.post_content = json.dumps(form.post_content.data.split('\r\n'))
+        post.post_content = json.dumps(form.post_content.data)
         post.edit_time = edit_time
         files = form.images.data # Optional images of form
         if files: # If user decided to upload more files
@@ -271,7 +269,7 @@ def edit_comment(post_id, comment_id):
     else:
         edit_time = time.time()
         # Loads current title and content
-        comment.content = json.dumps(form.comment.data.split('\r\n'))
+        comment.content = json.dumps(form.comment.data)
         comment.edit_time = edit_time
         db.session.commit()
         return redirect(f'/view/{post_id}')

@@ -4,8 +4,7 @@
         {% set x = 0 %}
     {% endif %}
     {# Display the comment with its content, username, time, and reactions #}
-    <div style="margin-left: {{x}}%;">
-
+    <div style="margin-left: {{ x }}%;" id="comment_{{ comment.id }}">
         {# Owner, time of post, reactions #}
         <p>{{ comment.username }}, Posted on: {{ moment(get_date(comment.time)).format('MMMM Do YYYY, h:mm:ss a') }}
         Likes: <span id="likes{{ comment.id }}">{{ comment_reactions[comment.id]['like_count'] }}</span> Dislikes: <span id="dislikes{{ comment.id }}">{{ comment_reactions[comment.id]['dislike_count'] }}</span></p>
@@ -14,19 +13,15 @@
         {% endif %}
 
         {# Content #}
-        {% for line in load(comment.content) %}
-            <p>{{ line }}</p>
-        {% endfor %}
+        <div class="preserve">{{ load(comment.content) }}</div>
 
         {# Like/dislike #}
         <button class="btn {% if current_user.username in comment_reactions[comment.id]['liked_by'] %} btn-dark {% endif %}" id="like_{{ comment.id }}" name="reaction" value="like" onclick="react('like', '{{ current_user.username }}', {{ post.id }}, {{ comment.id }})">Like</button>
         <button class="btn {% if current_user.username in comment_reactions[comment.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike_{{ comment.id }}" name="reaction" value="dislike" onclick="react('dislike', '{{ current_user.username }}', {{ post.id }}, {{ comment.id }})">Dislike</button>
 
         {# Add a reply #}
-        <form method="post" action="/view/post/{{ post.id }}/{{ comment.id }}" style="display: inline;"> 
-            <textarea name="comment" style="display: inline-block;" placeholder="Reply to this comment"></textarea>
-            <button type="submit" style="display: inline-block;">Reply</button>
-        </form>
+        <textarea name="comment" style="display: inline-block;" placeholder="Add a reply" id="commentContent_{{ comment.id }}"></textarea>
+        <button onclick="addComment({{ post.id }}, {{ comment.id }}, {{ x + 2 }})" style="display: inline-block;" id="add_{{ comment.id }}">Add</button>
 
         {# Button to edit only if you are the owner of the comment #}
         {% if current_user.username == comment.username %}
@@ -41,9 +36,9 @@
             <button type="submit">Remove</button>
         </form>
         {% endif %}
-
     </div>
-    
+    <div id="placeholder_{{ comment.id }}"></div>
+
     {# Recursively render replies to this comment if they exist #}
         {% for reply in get_replies(comment.id) %}
             {{ render_comment(reply, comment_reactions, post, current_user, get_date, moment, x + 2) }}
@@ -73,9 +68,7 @@
                 <a href="/view/{{ post.id }}" class="btn a_tag"> {# If this a tag is clicked you get to the full post page #}
                     <section class="card-body" style="height: 20vh; overflow-y: auto;"> {# Too long posts will be made scrollable #}
                         <h3 class="card-title post_title">{{ post.title }}</h3>
-                        {% for line in load(post.post_content) %} {# List has to be loaded because it was stored in JSON #}
-                            <p class="card-text" style="text-align: left;">{{ line }}</p>{# This allows posts to be rendered exactly as they were entered with all paragraphs and new lines#}
-                        {% endfor %}
+                        <div class="card-text preserve" style="text-align: left;">{{ load(post.post_content) }}</div>{# Class preserve allows posts to be rendered exactly as they were entered with all paragraphs and new lines#}
                     </section>
                     <section> 
                         {# For time I use flask-moment and a python function get_date() from helpers #}

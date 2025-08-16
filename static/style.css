@@ -38,6 +38,9 @@ top: 13px;
     margin:10px 25%;
 }
 
+.preserve{
+    white-space: pre-wrap; /* allow white spaces --> used for displaying multiline posts and comments */
+}
 #post{
     width: 90%;
     height: 50vh;

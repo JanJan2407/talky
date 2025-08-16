@@ -5,8 +5,7 @@
 <form action="/edit_comment/{{ post.id }}/{{ comment.id }}" method="post">
     {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
     <p class="center" style="margin-bottom:-0.5rem;">Write your comment</p>
-    <textarea name="comment" id="post" type="text" autocomplete="off">{% for line in load(comment.content) %}{{ line }} {# This weird indentation is required because of textbox weird mechanics #}
-{% endfor %}</textarea>
+    <textarea name="comment" id="post" type="text" autocomplete="off">{{ load(comment.content) }}</textarea>
     <button type="submit" class="btn btn-primary">Edit</button>
 </form>
 {% endblock %}
