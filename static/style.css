@@ -79,7 +79,6 @@ top: 13px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    gap: 5%;
     align-items: center;
 }
 /* All post content is wrapped in an a tag (not an image but text) */
@@ -138,3 +137,4 @@ top: 13px;
         width: 100%;
     }
 }
+
