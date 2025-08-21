@@ -7,7 +7,7 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_moment import Moment
 
-from helpers import get_date, get_replies
+from helpers import get_date, get_replies, validate
 from keys import key
 
 app = Flask(__name__)
@@ -28,6 +28,7 @@ db = SQLAlchemy(app)
 app.jinja_env.globals.update(get_date = get_date) 
 app.jinja_env.globals.update(get_replies = get_replies)
 app.jinja_env.globals.update(load = json.loads) # Converts JSON back to original
+app.jinja_env.globals.update(validate = validate) # Converts JSON back to original
 
 from models import *
 # Create or open a database with columns for User

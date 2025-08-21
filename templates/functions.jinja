@@ -51,19 +51,8 @@
     {% for post in posts %} {# Display posts -> they are arranged in grid of 3 per column #}
             <div class = "card flex_container">
                 <section style="width: 100%;"> <!-- Images -->
-                    {% for image_index in range(post.image_count) %}
-                    {# each image gets it's own id based on their parent post and their id in that specific post#}
-                        <section id="image{{image_index}}_{{ post.id }}" class="img_posts" style="background-image:url({{ url_for('get_image', filename = image_index ~ 'postimage_' ~ post.id ~ '.jpg') }});" {% if loop.first %} visible {% else %} hidden {% endif %}>
-                        {% if not loop.first %} {# _image_index+1_ and -1 are index to which image has to become visible when this button is pressed that's why images also have ids with their index #}
-                            <button onclick="switchImage({{ image_index }}, {{ image_index - 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-right:auto;"><-</button>
-                        {% endif %} 
-                        {% if not loop.last %}
-                            <button onclick="switchImage({{ image_index }}, {{ image_index + 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-left:auto;">-></button>
-                        {% endif %}
-                        </section>
-                    {% endfor %}
+                    {{ display_images(post) }}
                 </section>
-
                 <section> <!-- Title, text, info -->
                 <a href="/view/{{ post.id }}" class="btn a_tag"> {# If this a tag is clicked you get to the full post page #}
                     <section class="card-body" style="height: 20vh; overflow-y: auto;"> {# Too long posts will be made scrollable #}
@@ -73,10 +62,13 @@
                     <section> 
                         {# For time I use flask-moment and a python function get_date() from helpers #}
                         <p class="card-footer post_author center">{{ post.username }}</p>
-                        <p class="card-footer center">Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} Likes: <span id="likes{{ post.id }}">{{ post_reactions[post.id]['like_count'] }}</span> Dislikes: <span id="dislikes{{ post.id }}">{{ post_reactions[post.id]['dislike_count'] }}</span></p> {# Post_reactions is a dict of all reactions to all posts  #}
+                        <p class="card-footer center">Likes: <span id="likes{{ post.id }}">{{ post_reactions[post.id]['like_count'] }}</span> Dislikes: <span id="dislikes{{ post.id }}">{{ post_reactions[post.id]['dislike_count'] }}</span>
                         {% if post.edit_time != 0%}  {# If post was ever edited #}
-                            <p class="card-footer center">Last edited on: {{ moment(get_date(post.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}</p>
+                            Edited on: {{ moment(get_date(post.edit_time)).format('MMMM Do YYYY, h:mm:ss a') }}
+                        {% else %}
+                            Posted on: {{ moment(get_date(post.time)).format('MMMM Do YYYY, h:mm:ss a') }} 
                         {% endif %}
+                        </p> {# Post_reactions is a dict of all reactions to all posts  #}
                     </section>
                 </a>
                 </section>
@@ -95,5 +87,21 @@
                     <button class="btn {% if current_user.username in post_reactions[post.id]['disliked_by'] %} btn-dark {% endif %}" id="dislike_{{ post.id }}" name="reaction" onclick="react('dislike', '{{ current_user.username }}', {{ post.id }})" value="dislike">Dislike</button>
                 </section>
             </div>
+    {% endfor %}
+{% endmacro %}
+
+{% macro display_images(post) %}
+    {% set current_images = validate(post.id, post.image_count) %}
+    {% for image_index in current_images %}
+    {# each image gets it's own id based on their parent post and their id in that specific post#}
+        {% set fileUrl = url_for('get_image', filename = post.id ~ 'postimage_' ~ image_index ~ '.jpg') %}
+            <section id="image{{ post.id }}_{{ image_index }}" class="img_posts" style="background-image:url({{ fileUrl }});" {% if loop.first %} visible {% else %} hidden {% endif %}>
+            {% if not loop.first %} {# _image_index+1_ and -1 are index to which image has to become visible when this button is pressed that's why images also have ids with their index #}
+                <button type="button" onclick="switchImage({{ image_index }}, {{ image_index - 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-right:auto;"><-</button>
+            {% endif %} 
+            {% if not loop.last %}
+                <button type="button" onclick="switchImage({{ image_index }}, {{ image_index + 1 }}, {{ post.id }})" class="btn btn-success" style="display: inline; margin-left:auto;">-></button>
+            {% endif %}
+            </section>
     {% endfor %}
 {% endmacro %}

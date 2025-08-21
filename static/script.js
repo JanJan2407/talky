@@ -43,9 +43,21 @@ function searchPost() // Used to search posts by title and by person who posted 
     }
 }
 
-function switchImage(currentIndex, targetedIndex, postID){ // Used to switch between images on posts if a post have more than one
-    document.getElementById(`image${currentIndex}_${postID}`).hidden = true;
-    document.getElementById(`image${targetedIndex}_${postID}`).hidden = false;
+function switchImage(currentIndex, targetedIndex, postID) {
+    // Hide current image
+    document.getElementById(`image${postID}_${currentIndex}`).hidden = true; // Hide current image
+    
+    // Find next available image in the correct direction
+    const direction = currentIndex < targetedIndex ? 1 : -1; // If searched for image has a bigger index or smaller
+    
+    while (true) { // Loop trough images until you find the colest one that fits requirements in that case display it
+        const image = document.getElementById(`image${postID}_${targetedIndex}`);
+        if (image) {
+            image.hidden = false;
+            break;
+        }
+        targetedIndex += direction;
+    }
 }
 
 function react(action, username, postID, commentID = null){

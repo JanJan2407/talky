@@ -1,16 +1,33 @@
 {% extends "template.html" %}
 {% block title %}Edit a post{% endblock %}
-
+{% from "functions.jinja" import display_images %} <!-- Import macro for displaying posts -->
 {% block body %}
 <form action="/edit_post/{{ post.id }}" method="post" enctype="multipart/form-data"><!-- enctype is necessary for posting images-->
     
     {{ form.hidden_tag() }} <!-- This is the form that will make your post -->
-    <input name="title" id="title" class="center" type="text" placeholder="Title" autocomplete="off" value="{{ post.title }}">
+    <input name="title" id="title" class="center" type="text" placeholder="Title" autocomplete="off" value="{{ post.title }}" style="margin-top: 1rem;">
     <p class="center" style="margin-bottom:-0.5rem;">Write your message</p>
-    <textarea name="post_content" id="post" type="text" autocomplete="off" class="preserve">{{ load(post.post_content) }}</textarea> {# This weird indentation is required because of textbox weird mechanics #}
+    <div style="display: flex; justify-content: space-around; margin-top: 10px;">
+        <section style="width:45%; display:inline-block;" class="center">
+            <textarea name="post_content" id="post" type="text" autocomplete="off" class="preserve">{{ load(post.post_content) }}</textarea> {# This weird indentation is required because of textbox weird mechanics #}
+        </section>
+        {% if post.image_count > 0 %}
+            <section style="width: 45%; display: inline-block;" class="center"> <!-- Images -->
+                {{ display_images(post) }}
+            </section>
+        {% endif %}
+    </div>
+    {% set valid = validate(post.id, post.image_count) %}
+    {% if  valid | length > 0 %} {# Only do anything of this if there are more than 0 valid images #}
+    <section style="margin-top: -2.5em;" class="center">
+        <h1>Choose images you wish to delete</h1>
+        {% for i in valid %}
+            <input type="checkbox" value="{{ i }}" name="remove_image">{{ loop.index }} {# Values that server reads are img names and values that user see are just numbers from 1 up for better UX #}
+        {% endfor %}
+    </section>
+    {% endif %}
     <input type="file" name="images" multiple>
     <p style="color: red;">{{ error }}</p>
-    <p style="color: red;">Removing images from posts currently not possible !</p>
     <button type="submit" class="btn btn-primary">Edit</button>
 </form>
 {% endblock %}

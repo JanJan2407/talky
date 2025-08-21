@@ -1,6 +1,7 @@
 '''Functions and classes that will be used in application'''
 
 import datetime
+import os
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp', 'gif'} # Allowed image extensions
 
 def valid_error(error):
@@ -41,3 +42,15 @@ def get_reactions(post_id = None, comment_id = None):
         'disliked_by': dislikes
     }
     return reactions_dict
+
+def validate(post_id, image_count):
+    ''' Get all valid images unter a specific post '''
+    from resources import app
+
+    valid_images = []
+    for i in range(image_count):
+        f_path = os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{post_id}postimage_{i}.jpg')
+        if os.path.exists(f_path):
+            valid_images.append(i)
+
+    return valid_images

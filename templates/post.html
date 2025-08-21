@@ -8,9 +8,11 @@
     <input name="title" id="title" class="center" type="text" placeholder="Title" autofocus autocomplete="off">
     <p class="center" style="margin-bottom:-0.5rem;">Write your message</p>
     <textarea name="post_content" id="post" type="text" autocomplete="off"></textarea>
-    <input type="file" name="images" multiple>
+    <section style="margin: 0 5%;">
+        <input type="file" name="images" multiple>
+        <button style="display: inline; float: right;" type="submit" class="btn btn-primary">Submit</button>
+    </section>
     <p style="color: red;">{{ error }}</p>
-    <button type="submit" class="btn btn-primary">Submit</button>
 
 </form>
 {% endblock %}

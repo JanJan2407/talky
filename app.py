@@ -203,13 +203,13 @@ def post(): # Allow users to post messages for everyone
                     img = Image.open(file) # Open img with Python image library
                     jpg_images.append(img.convert('RGB'))  # Convert opened image to jpg because it is much smaller
                 else:
-                    db.session.remove(post) # Removes previously uploaded post because user may have provided wrong input
+                    db.session.delete(post) # Removes previously uploaded post because user may have provided wrong input
                     db.session.commit()
                     return render_template("post.html", form = form, error='Only .jpg, .png, .jpeg, .gif and .webp are allowed. Post was not uploaded')
                 
             post.image_count = len(jpg_images)
             for i, jpg_img in enumerate(jpg_images): # i will be a sign of how many images this post have 
-                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], str(i) + 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
+                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], str(post.id) + 'postimage_' + str(i) + '.jpg')) # Save it in a folder post_images in a folder instance
 
             db.session.commit()
         return redirect('/posts')
@@ -235,6 +235,14 @@ def edit_post(post_id):
         post.title = form.title.data 
         post.post_content = json.dumps(form.post_content.data)
         post.edit_time = edit_time
+        remove_images = request.form.getlist('remove_image') 
+        # Remove all images chosen to be removed
+        for image in remove_images:
+            try:
+                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{str(post.id)}postimage_{image}.jpg')) # Deletes the image from the folder
+            except Exception: # If something went wrong
+                pass
+        
         files = form.images.data # Optional images of form
         if files: # If user decided to upload more files
             jpg_images =  []
@@ -247,7 +255,7 @@ def edit_post(post_id):
                 
             p_count = post.image_count # How many images were uploaded to that posts before editing, used it for loop for saving in order to save correctly
             for i, jpg_img in enumerate(jpg_images): # i will be a sign of how many images this post have here i + p_count because some images already exist for this post
-                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], str(i + p_count) + 'postimage_' + str(post.id) + '.jpg')) # Save it in a folder post_images in a folder instance
+                jpg_img.save(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{str(post.id)}postimage_{str(i + p_count)}.jpg')) # Save it in a folder post_images in a folder instance
             post.image_count += len(jpg_images)
         db.session.commit()
         return redirect('/posts')
@@ -317,7 +325,7 @@ def remove(post_id, comment_id = None):
 
         for i in range(post.image_count): # If post has images they will be deleted as well
             try:
-                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{i}postimage_' + str(post.id) + '.jpg')) # Deletes the image from the folder
+                os.remove(os.path.join(app.config['POST_UPLOAD_FOLDER'], f'{str(post.id)}postimage_{image}.jpg')) # Deletes the image from the folder
             except Exception: # If something went wrong
                 pass
 
